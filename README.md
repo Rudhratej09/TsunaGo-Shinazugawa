@@ -20,7 +20,7 @@ TsunaGo runs on open models through any OpenAI-compatible provider. The free def
 
 | Key | What for | Get it free |
 |---|---|---|
-| `GROQ_API_KEY` | The model (Llama 3.3 70B) for Partner Scout, the Advisor and brochure analysis | https://console.groq.com |
+| `GROQ_API_KEY` | The model (gpt-oss-120b on Groq) for Partner Scout, the Advisor and brochure analysis | https://console.groq.com |
 | `TAVILY_API_KEY` | Web search for Partner Scout and the Advisor's cited facts | https://tavily.com |
 
 ```bash

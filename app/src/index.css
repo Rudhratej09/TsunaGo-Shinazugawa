@@ -47,7 +47,7 @@ a { color: inherit; }
   border-bottom: 1px solid var(--ink);
 }
 .brand { display: flex; align-items: center; cursor: pointer; background: none; border: 0; padding: 0; }
-.brand img { height: 30px; width: auto; display: block; }
+.brand img { height: 42px; width: auto; display: block; }
 .steps { display: flex; gap: 2px; margin-left: auto; }
 .steps button {
   white-space: nowrap;
@@ -544,3 +544,5 @@ details summary { cursor: pointer; margin-top: 6px; }
 .change { display: grid; grid-template-columns: 90px 1fr; gap: 4px 14px; border-bottom: 1px solid var(--hair-2); }
 .change > div { grid-column: 2; }
 .signoff { margin-top: 20px; }
+.weight-note { display: block; margin-top: 4px; font-size: 12.5px; color: var(--sakura-deep) !important; }
+.gbtn-link { white-space: nowrap; }

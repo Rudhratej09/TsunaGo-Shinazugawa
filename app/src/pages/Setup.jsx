@@ -66,7 +66,8 @@ export function NeedsStep({ answers, set, go }) {
           <label className="eyebrow" style={{ marginBottom: 8 }}>{t('Partner priorities')}</label>
           {PRIORITIES.map((p) => (
             <div className="prio-row" key={p.id}>
-              <div><b>{t(p.label)}</b><span>{t(p.hint)}</span></div>
+              <div><b>{t(p.label)}</b><span>{t(p.hint)}</span>
+                {p.id === 'technical' && model === 'B' && <span className="weight-note">{t('×1.6 weight: you need local installation and have no service team in India')}</span>}</div>
               <div className="dots" role="radiogroup" aria-label={t(p.label)}>
                 {[1, 2, 3, 4, 5].map((n) => (
                   <button key={n} aria-label={`${n} / 5`} className={`${answers.priorities[p.id] >= n ? 'on' : ''} ${p.id === 'technical' && model === 'B' ? 'sakura' : ''}`}

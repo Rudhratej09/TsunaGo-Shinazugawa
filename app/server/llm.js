@@ -4,7 +4,8 @@
 import Anthropic from '@anthropic-ai/sdk'
 
 const PRESETS = {
-  groq: { baseURL: 'https://api.groq.com/openai/v1', keyVar: 'GROQ_API_KEY', model: 'llama-3.3-70b-versatile' },
+  // Groq retired llama-3.3-70b-versatile on 2026-08-16; gpt-oss is its recommended replacement.
+  groq: { baseURL: 'https://api.groq.com/openai/v1', keyVar: 'GROQ_API_KEY', model: 'openai/gpt-oss-120b', fallbacks: ['openai/gpt-oss-20b', 'qwen/qwen3.6-27b'] },
   huggingface: { baseURL: 'https://router.huggingface.co/v1', keyVar: 'HF_TOKEN', model: 'Qwen/Qwen2.5-72B-Instruct' },
   openrouter: { baseURL: 'https://openrouter.ai/api/v1', keyVar: 'OPENROUTER_API_KEY', model: 'meta-llama/llama-3.3-70b-instruct:free' },
   ollama: { baseURL: 'http://localhost:11434/v1', keyVar: null, model: 'qwen2.5:7b' },
@@ -26,7 +27,63 @@ export function llmConfig(env) {
   const p = PRESETS[name]
   const apiKey = p.keyVar ? env[p.keyVar] || env.LLM_API_KEY : 'ollama'
   if (!apiKey) return null
-  return { name, baseURL: env.LLM_BASE_URL || p.baseURL, apiKey, model: env.LLM_MODEL || p.model }
+  const model = env.LLM_MODEL || p.model
+  const fallbacks = [p.model, ...(p.fallbacks || [])].filter((m) => m !== model)
+  return { name, baseURL: env.LLM_BASE_URL || p.baseURL, apiKey, model, fallbacks }
+}
+
+const isReasoning = (model) => /gpt-oss|qwen3/i.test(model)
+
+// POST /chat/completions, moving on to the next model when the provider says the current one
+// is unknown or retired (providers retire free models with little notice). Returns the
+// Response plus the model that answered.
+export async function postChat(cfg, body, timeoutMs = 50_000) {
+  const models = [cfg.model, ...(cfg.fallbacks || [])]
+  for (let i = 0; i < models.length; i++) {
+    const model = models[i]
+    const payload = { ...body, model }
+    if (isReasoning(model) && cfg.name === 'groq') {
+      // Reasoning tokens count against max_tokens; keep reasoning short and leave headroom.
+      payload.reasoning_effort = 'low'
+      if (payload.max_tokens) payload.max_tokens += 2000
+    }
+    const ctrl = new AbortController()
+    const timer = setTimeout(() => ctrl.abort(), timeoutMs)
+    let res
+    try {
+      res = await fetch(`${cfg.baseURL}/chat/completions`, {
+        method: 'POST',
+        signal: ctrl.signal,
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${cfg.apiKey}` },
+        body: JSON.stringify(payload),
+      })
+    } catch (e) {
+      throw new LLMError(e.name === 'AbortError' ? 'timeout' : 'network', e.name === 'AbortError' ? 'The model took too long to answer.' : `Could not reach ${cfg.name}.`)
+    } finally {
+      clearTimeout(timer)
+    }
+    if (res.status === 404 || res.status === 400) {
+      const text = await res.text()
+      const gone = res.status === 404 || /model.*(not found|does not exist|decommission|deprecat|retired)/i.test(text)
+      if (gone && i < models.length - 1) continue
+      return { res: new Response(text, { status: res.status, headers: res.headers }), model }
+    }
+    return { res, model }
+  }
+}
+
+// Turn a failed provider response into an LLMError that says what actually went wrong.
+export async function providerError(cfg, res, model) {
+  if (res.status === 401 || res.status === 403) return new LLMError('auth', `The ${cfg.name} API key was rejected.`)
+  if (res.status === 429) return new LLMError('rate_limit', `${cfg.name} rate limit reached — wait a moment and retry.`, 429)
+  let detail = ''
+  try {
+    const j = await res.json()
+    detail = j.error?.message || j.message || ''
+  } catch {
+    // body was not JSON
+  }
+  return new LLMError('api', `${cfg.name} API error ${res.status} (model ${model})${detail ? `: ${String(detail).slice(0, 200)}` : '.'}`)
 }
 
 // Open models sometimes wrap JSON in prose or code fences; take the outermost object.
@@ -48,39 +105,22 @@ function parseJSON(text) {
 }
 
 async function openAICompatible(cfg, { system, user, schema, maxTokens }) {
-  const ctrl = new AbortController()
-  const timer = setTimeout(() => ctrl.abort(), 45_000)
-  let res
-  try {
-    res = await fetch(`${cfg.baseURL}/chat/completions`, {
-      method: 'POST',
-      signal: ctrl.signal,
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${cfg.apiKey}` },
-      body: JSON.stringify({
-        model: cfg.model,
-        temperature: 0.2,
-        max_tokens: maxTokens,
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: `${system}\n\nRespond with a single JSON object that follows this JSON Schema exactly:\n${JSON.stringify(schema)}` },
-          { role: 'user', content: user },
-        ],
-      }),
-    })
-  } catch (e) {
-    throw new LLMError(e.name === 'AbortError' ? 'timeout' : 'network', e.name === 'AbortError' ? 'The model took too long to answer.' : `Could not reach ${cfg.name}.`)
-  } finally {
-    clearTimeout(timer)
-  }
-  if (res.status === 401 || res.status === 403) throw new LLMError('auth', `The ${cfg.name} API key was rejected.`)
-  if (res.status === 429) throw new LLMError('rate_limit', `${cfg.name} rate limit reached — wait a moment and retry.`, 429)
-  if (!res.ok) throw new LLMError('api', `${cfg.name} API error ${res.status}.`)
+  const { res, model } = await postChat(cfg, {
+    temperature: 0.2,
+    max_tokens: maxTokens,
+    response_format: { type: 'json_object' },
+    messages: [
+      { role: 'system', content: `${system}\n\nRespond with a single JSON object that follows this JSON Schema exactly:\n${JSON.stringify(schema)}` },
+      { role: 'user', content: user },
+    ],
+  }, 45_000)
+  if (!res.ok) throw await providerError(cfg, res, model)
   const body = await res.json()
   const choice = body.choices?.[0]
   if (choice?.finish_reason === 'length') throw new LLMError('truncated', 'The answer was cut off; try a shorter input.', 422)
   const content = choice?.message?.content
   if (!content) throw new LLMError('empty', 'The model returned nothing.')
-  return { data: parseJSON(content), model: body.model || cfg.model }
+  return { data: parseJSON(content), model: body.model || model }
 }
 
 async function anthropicCall(cfg, { system, user, schema, maxTokens }) {

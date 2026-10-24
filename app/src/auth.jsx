@@ -38,7 +38,7 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     authCall('me')
-      .then((d) => setState({ enabled: d.enabled, clientId: d.clientId, user: d.user, ready: true, error: '' }))
+      .then((d) => setState({ enabled: d.enabled, clientId: d.clientId, productionHost: d.productionHost, user: d.user, ready: true, error: '' }))
       .catch(() => setState((s) => ({ ...s, ready: true })))
   }, [])
 
@@ -64,12 +64,14 @@ export const useAuth = () => useContext(AuthContext)
 
 // Google's own rendered button (required by Google's branding rules).
 export function GoogleButton({ lang = 'en', size = 'medium' }) {
-  const { clientId, onCredential } = useAuth()
+  const { clientId, onCredential, productionHost } = useAuth()
   const ref = useRef(null)
   const [failed, setFailed] = useState(false)
+  // On a preview / per-deployment URL Google would answer "origin_mismatch".
+  const elsewhere = productionHost && window.location.host !== productionHost && !/^(localhost|127\.)/.test(window.location.hostname)
 
   useEffect(() => {
-    if (!clientId) return
+    if (!clientId || elsewhere) return
     let cancelled = false
     loadGoogleScript()
       .then((google) => {
@@ -85,9 +87,13 @@ export function GoogleButton({ lang = 'en', size = 'medium' }) {
     return () => {
       cancelled = true
     }
-  }, [clientId, onCredential, lang, size])
+  }, [clientId, onCredential, lang, size, elsewhere])
 
   if (!clientId) return null
+  if (elsewhere) {
+    const href = `https://${productionHost}/${window.location.hash}`
+    return <a className="small gbtn-link" href={href}>{lang === 'ja' ? 'サインインは本番サイトで →' : 'Sign in on the main site →'}</a>
+  }
   return failed ? <span className="small muted">Google sign-in unavailable</span> : <div ref={ref} className="gbtn" />
 }
 

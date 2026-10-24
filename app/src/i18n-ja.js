@@ -604,6 +604,7 @@ export const JA = {
   'what would change your answer?': '何があれば結論が変わる？',
   'go deeper on pricing': '価格をもっと詳しく',
   'Rule source': '出典',
+  '×1.6 weight: you need local installation and have no service team in India': '重み×1.6：現地据付が必要で、インドにサービスチームがないため',
   // Market & compliance
   'A distributor with sales reach into these buyers in {s}; your own team handles technical support.': '{s}でこれらの買い手に販売網を持つ代理店。技術サポートは自社チームが担当。',
   'After': '前提ステップ',
