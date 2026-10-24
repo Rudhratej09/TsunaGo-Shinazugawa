@@ -4,6 +4,7 @@ import Sakura from './components/Sakura.jsx'
 import Intro from './components/Intro.jsx'
 import { BRAND } from './brand.js'
 import SidePanel from './components/SidePanel.jsx'
+import Journey from './components/Journey.jsx'
 import Home from './pages/Home.jsx'
 import { NeedsStep, ProfileStep } from './pages/Setup.jsx'
 import Options from './pages/Options.jsx'
@@ -25,7 +26,9 @@ const STEPS = [
   ['options', 'Options'],
   ['plan', 'Pilot plan'],
 ]
-const ROUTES = ['home', 'why', 'analyze', 'scout', 'advisor', 'compliance', ...STEPS.map((s) => s[0])]
+const ROUTES = ['home', 'why', 'analyze', 'scout', 'advisor', 'compliance', 'market', 'partners', ...STEPS.map((s) => s[0])]
+// Pages without the journey sidebar.
+const LANDING = ['home', 'why']
 
 const initialAnswers = () => {
   const p = PROFILES[1]
@@ -42,15 +45,47 @@ const readLang = () => {
 
 const readRoute = () => {
   const r = window.location.hash.replace('#/', '')
+  if (r === 'options') return 'market' // old links
   return ROUTES.includes(r) ? r : 'home'
+}
+
+const readStore = (key, fallback) => {
+  try {
+    const v = localStorage.getItem(key)
+    return v ? JSON.parse(v) : fallback
+  } catch {
+    return fallback
+  }
 }
 
 export default function App() {
   const [route, setRoute] = useState(readRoute)
-  const [answers, setAnswers] = useState(initialAnswers)
+  const [answers, setAnswers] = useState(() => ({ ...initialAnswers(), ...readStore('tsunago-answers', {}) }))
   const [panel, setPanel] = useState(null)
-  const [shortlist, setShortlist] = useState([])
+  const [shortlist, setShortlist] = useState(() => readStore('tsunago-shortlist', []))
   const [customPartners, setCustomPartners] = useState([])
+  // Keep the plan across reloads (answers and shortlist live only in this browser).
+  useEffect(() => {
+    try {
+      localStorage.setItem('tsunago-answers', JSON.stringify(answers))
+      localStorage.setItem('tsunago-shortlist', JSON.stringify(shortlist))
+    } catch {
+      // storage unavailable: the plan still works for this visit
+    }
+  }, [answers, shortlist])
+
+  // Steps opened so far, for the journey checklist.
+  const [visited, setVisited] = useState(() => ({ ...readStore('tsunago-visited', {}), [readRoute()]: true }))
+  const markVisited = useCallback((r) => setVisited((v) => {
+    if (v[r]) return v
+    const next = { ...v, [r]: true }
+    try {
+      localStorage.setItem('tsunago-visited', JSON.stringify(next))
+    } catch {
+      // storage unavailable: the checklist still works for this visit
+    }
+    return next
+  }), [])
   const auth = useAuth()
   const [lang, setLangState] = useState(readLang)
   const setLang = (l) => {
@@ -73,17 +108,21 @@ export default function App() {
     BRAND.intro && readRoute() === 'home' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'playing' : 'done')
 
   useEffect(() => {
-    const onHash = () => setRoute(readRoute())
+    const onHash = () => {
+      setRoute(readRoute())
+      markVisited(readRoute())
+    }
     window.addEventListener('hashchange', onHash)
     return () => window.removeEventListener('hashchange', onHash)
-  }, [])
+  }, [markVisited])
 
   const go = useCallback((r) => {
     window.location.hash = '/' + r
     setRoute(r)
+    markVisited(r)
     setPanel(null)
     window.scrollTo({ top: 0, behavior: 'smooth' })
-  }, [])
+  }, [markVisited])
 
   const result = useMemo(() => evaluate(answers, customPartners), [answers, customPartners])
 
@@ -99,8 +138,8 @@ export default function App() {
   const pick = (p) => setAnswers((a) => ({ ...a, ...p.defaults, profile: p.id }))
   const open = (kind, data) => setPanel({ kind, id: data.id })
   const toggleShortlist = (id) => setShortlist((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]))
-  const reached = answers.profile ? 4 : 1
-  const stepIndex = STEPS.findIndex((s) => s[0] === route)
+  const journeyState = { answers, visited, shortlist, signedOff: !!readStore('tsunago-compliance-signoff', {}).done, advisorStarted: readStore('tsunago-advisor-chat', []).length > 0 }
+  const withSidebar = !LANDING.includes(route)
 
   const props = { answers, set, go, result, open, selected: panel?.id, shortlist, toggleShortlist }
 
@@ -110,15 +149,8 @@ export default function App() {
       <div className="app">
         <header className="top">
           <button className="brand" onClick={() => go('home')} aria-label={`${BRAND.name} home`}><img src={BRAND.logo} alt={BRAND.name} /></button>
-          <nav className="steps" aria-label="Steps">
-            {STEPS.map(([id, label], i) => (
-              <button key={id} className={route === id ? 'on' : ''} disabled={i >= reached} onClick={() => go(id)}>
-                <i>{i + 1}</i>{t(label)}
-              </button>
-            ))}
-            <button className={route === 'scout' ? 'on' : ''} onClick={() => go('scout')} style={{ marginLeft: 12, borderLeft: '1px solid var(--hair)' }}>✦ {t('Partner Scout')}</button>
-            <button className={route === 'advisor' ? 'on' : ''} onClick={() => go('advisor')}>{t('Advisor')}</button>
-            <button className={route === 'compliance' ? 'on' : ''} onClick={() => go('compliance')}>{t('Compliance')}</button>
+          <nav className="steps" aria-label={t('Site')}>
+            {LANDING.includes(route) && <button onClick={() => go(answers.profile ? 'market' : 'profile')}>{answers.profile ? t('Continue my plan →') : t('Start')}</button>}
             <button className={route === 'why' ? 'on' : ''} onClick={() => go('why')}>{t('Why TsunaGo')}</button>
             <span className="lang-switch" role="group" aria-label="Language">
               <button className={lang === 'en' ? 'on' : ''} onClick={() => setLang('en')}>EN</button>
@@ -132,14 +164,10 @@ export default function App() {
           )}
         </header>
 
-        {stepIndex >= 0 && (
-          <div style={{ height: 1, background: 'var(--hair-2)' }}>
-            <motion.div style={{ height: 1, background: 'var(--sakura-deep)' }} animate={{ width: `${((stepIndex + 1) / STEPS.length) * 100}%` }} />
-          </div>
-        )}
-
+        <div className={withSidebar ? 'shell' : ''}>
+        {withSidebar && <Journey route={route} go={go} state={journeyState} />}
         <AnimatePresence mode="wait">
-          <motion.main key={route} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.35 }} style={{ flex: 1 }}>
+          <motion.main key={route} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.35 }} style={{ flex: 1, minWidth: 0 }}>
             {route === 'home' && <Home go={go} intro={intro} />}
             {route === 'why' && <Why go={go} />}
             {route === 'scout' && (
@@ -154,10 +182,11 @@ export default function App() {
             )}
             {route === 'profile' && <ProfileStep answers={answers} pick={pick} go={go} />}
             {route === 'needs' && (answers.profile ? <NeedsStep {...props} /> : <ProfileStep answers={answers} pick={pick} go={go} />)}
-            {route === 'options' && (answers.profile ? <Options {...props} /> : <ProfileStep answers={answers} pick={pick} go={go} />)}
+            {(route === 'market' || route === 'partners') && (answers.profile ? <Options {...props} view={route} /> : <ProfileStep answers={answers} pick={pick} go={go} />)}
             {route === 'plan' && (answers.profile ? <Plan {...props} /> : <ProfileStep answers={answers} pick={pick} go={go} />)}
           </motion.main>
         </AnimatePresence>
+        </div>
 
         <footer className="foot">
           <span>{t('TEAM SHINAZUGAWA · Thapar × JETRO Hackathon')}</span>

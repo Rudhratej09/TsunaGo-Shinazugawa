@@ -18,7 +18,7 @@ export default function Plan({ answers, result, shortlist, open, go }) {
     <div className="page">
       <div className="results-head">
         <div>
-          <div className="eyebrow">{t('Step 04 · Pilot plan')}</div>
+          <div className="eyebrow">{t('Stage 6 · Pilot & long-term operations')}</div>
           <h1 className="h2">{t('Plan the first pilot')} {lang === 'en' && <span className="jp" style={{ fontSize: '0.6em' }}>パイロット計画</span>}</h1>
           <p className="muted" style={{ margin: 0 }}>
             {t(industryLabel(answers.industry))} · {t('model')} {plan.model} ({t(MODEL_COPY[plan.model].route)}) · {t(plan.region.name)} · {t('{n} weeks', { n: plan.weeks })}
@@ -85,7 +85,7 @@ export default function Plan({ answers, result, shortlist, open, go }) {
 
       <p className="small muted" style={{ marginTop: 22 }}>{t('Legal, tax and compliance steps remain expert-reviewed tasks. TsunaGo prepares the brief; qualified advisers sign off.')}</p>
       <div className="no-print" style={{ marginTop: 18, display: 'flex', justifyContent: 'space-between' }}>
-        <button className="btn ghost" onClick={() => go('options')}>{t('← Entry options')}</button>
+        <button className="btn ghost" onClick={() => go('partners')}>{t('← Entry options')}</button>
         <button className="btn" onClick={() => go('why')}>{t('Why TsunaGo →')}</button>
       </div>
     </div>

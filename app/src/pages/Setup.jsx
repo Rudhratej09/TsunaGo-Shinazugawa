@@ -7,7 +7,7 @@ export function ProfileStep({ answers, pick, go }) {
   const { t, lang } = useI18n()
   return (
     <div className="page">
-      <div className="eyebrow">{t('Step 01 · Profile')}</div>
+      <div className="eyebrow">{t('Start · Company profile')}</div>
       <h1 className="h2">{t('Which SME looks like yours?')} {lang === 'en' && <span className="jp" style={{ fontSize: '0.6em' }}>貴社に近いのは</span>}</h1>
       <p className="muted">{t('Start from a preset profile. You can edit every default in the next step.')}</p>
       <div className="grid box profiles">
@@ -47,7 +47,7 @@ export function NeedsStep({ answers, set, go }) {
   const setPrio = (k, v) => set({ priorities: { ...answers.priorities, [k]: v } })
   return (
     <div className="page">
-      <div className="eyebrow">{t('Step 02 · Requirements')}</div>
+      <div className="eyebrow">{t('Start · Requirements')}</div>
       <h1 className="h2">{t('Tell TsunaGo what matters')} {lang === 'en' && <span className="jp" style={{ fontSize: '0.6em' }}>優先事項</span>}</h1>
       <p className="muted">{t('Six questions. Each one changes which partners pass the essential checks and what the pilot costs.')}</p>
 
@@ -90,7 +90,7 @@ export function NeedsStep({ answers, set, go }) {
 
       <div style={{ marginTop: 28, display: 'flex', justifyContent: 'space-between' }}>
         <button className="btn ghost" onClick={() => go('profile')}>{t('← Profile')}</button>
-        <button className="btn" onClick={() => go('options')}>{t('Compare my entry options →')}</button>
+        <button className="btn" onClick={() => go('market')}>{t('Compare my entry options →')}</button>
       </div>
     </div>
   )

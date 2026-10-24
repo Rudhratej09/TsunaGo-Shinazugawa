@@ -191,7 +191,7 @@ export default function Analyze({ answers, customPartners, addPartner, open, go 
                   <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 16 }}>
                     <button className="btn" disabled={added} onClick={() => addPartner(out.partner)}>{added ? t('✓ Added to partner list') : t('Add to partner list')}</button>
                     {added && <button className="btn ghost" onClick={() => open('partner', out.partner)}>{t('Open full analysis')}</button>}
-                    {added && answers.profile && <button className="link" onClick={() => go('options')}>{t('See it ranked in Options →')}</button>}
+                    {added && answers.profile && <button className="link" onClick={() => go('partners')}>{t('See it ranked in Options →')}</button>}
                   </div>
                   <p className="small muted" style={{ marginTop: 10 }}>{t('Scored for: {m}. Change your requirements and the score updates.', { m: MODEL_COPY[scored.model].title })}</p>
                 </div>
