@@ -1,4 +1,6 @@
 import { motion } from 'framer-motion'
+import { JP_PRESENCE } from '../data/catalog.js'
+import { STATE_NAMES } from '../lib/geo.js'
 
 const USPS = [
   ['Connected, not static', 'A report answers once. TsunaGo is a decision model: flip one requirement and partner fit, region rank, price and plan all recompute.'],
@@ -90,6 +92,23 @@ export default function Why({ go }) {
           <div>{a.map((p) => <p key={p}>{p}</p>)}</div>
         </div>
       ))}
+
+      <h2 className="h2" style={{ marginTop: 64 }}>Data behind the prototype</h2>
+      <div className="box" style={{ overflowX: 'auto' }}>
+        <table className="compare">
+          <thead><tr><th>Data</th><th>Source</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Japanese companies in India: {JP_PRESENCE.totalCompanies.toLocaleString()} companies, {JP_PRESENCE.totalEstablishments.toLocaleString()} establishments; by state: {Object.entries(JP_PRESENCE.states).map(([s, v]) => `${STATE_NAMES[s]} ${v.companies}`).join(', ')}</td>
+              <td><a href={JP_PRESENCE.url} target="_blank" rel="noreferrer">{JP_PRESENCE.source}</a></td>
+              <td>Sourced. Drives the Japan-ecosystem index</td>
+            </tr>
+            <tr><td>Partner extraction from brochures</td><td>Claude (live), with every quote checked against the source text</td><td>Live AI · demo samples cached offline</td></tr>
+            <tr><td>Cluster demand, logistics, talent, cost indices</td><td>Team estimates</td><td>Illustrative · to be replaced</td></tr>
+            <tr><td>Partner companies</td><td>Fictional profiles built to test the logic</td><td>Illustrative</td></tr>
+          </tbody>
+        </table>
+      </div>
 
       <div className="box cell" style={{ marginTop: 48, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
         <div>

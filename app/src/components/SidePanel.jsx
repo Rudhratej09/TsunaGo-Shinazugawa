@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import IndiaMap from './IndiaMap.jsx'
 import { Radar, ScoreRing, StackedBar } from './Charts.jsx'
-import { CLUSTERS } from '../data/catalog.js'
+import { CLUSTERS, JP_PRESENCE } from '../data/catalog.js'
 import { analyse, COST_DEFAULTS, costModel, industryLabel, MODEL_COPY } from '../lib/engine.js'
 import { STATE_NAMES } from '../lib/geo.js'
 
@@ -251,7 +251,15 @@ function RegionView({ c, answers, result, onClose }) {
               <p>{c.name} ranks #{rank} for {ind}. {c.note} {eligible.length
                 ? `${eligible.length} partner${eligible.length > 1 ? 's' : ''} here pass${eligible.length > 1 ? '' : 'es'} every essential check under model ${result.model}.`
                 : `No partner here passes every essential check under model ${result.model} — treat it as a second-wave region.`}</p>
-              <div className="src">Indices are illustrative for the prototype and will be replaced with sourced figures.</div>
+              {c.japanSource ? (
+                <div className="src">
+                  Japan ecosystem {c.japan}/100 = {c.japanSource.companies} Japanese companies in {c.japanSource.states.map((s) => STATE_NAMES[s]).join(' + ')}
+                  {' '}(of {JP_PRESENCE.totalCompanies.toLocaleString()} in India) · <a href={JP_PRESENCE.url} target="_blank" rel="noreferrer">{JP_PRESENCE.source}</a>
+                  {!c.japanSource.checked && ' · figure pending check against the PDF'}. Other indices are illustrative.
+                </div>
+              ) : (
+                <div className="src">No sourced company count for this state yet — the Japan index here is illustrative.</div>
+              )}
             </div>
             <div className="map-wrap" style={{ marginTop: 22 }}>
               <IndiaMap presence={presence} clusters={CLUSTERS} highlightClusters={[c.id]} animateKey={c.id} height={380} />

@@ -63,6 +63,36 @@ export const PRIORITIES = [
   { id: 'japan', label: 'Japan experience', hint: 'Has worked with Japanese principals' },
 ]
 
+// Japanese corporate presence by state. Source: Embassy of Japan in India & JETRO,
+// "List of Japanese Companies in India" (as of October 2024). `checked: false` marks figures
+// transcribed from secondary reporting that still need checking against the PDF.
+export const JP_PRESENCE = {
+  source: 'Embassy of Japan in India & JETRO, List of Japanese Companies in India (as of Oct 2024)',
+  url: 'https://www.in.emb-japan.go.jp/files/100867260.pdf',
+  totalCompanies: 1434,
+  totalEstablishments: 5205,
+  states: {
+    hr: { companies: 394, checked: true },
+    dl: { companies: 144, checked: true },
+    mh: { companies: 248, checked: false },
+    ka: { companies: 234, checked: false },
+    tn: { companies: 182, checked: false },
+    gj: { companies: 40, checked: false },
+  },
+}
+
+// Each cluster lists the states whose Japanese companies it draws on.
+const JP_STATES = { pune: ['mh'], chennai: ['tn'], ncr: ['hr', 'dl'], neemrana: ['rj'], ahmedabad: ['gj'], bengaluru: ['ka'] }
+const JP_MAX = Math.log1p(394 + 144)
+
+// Japan-ecosystem index: log-scaled company count (diminishing returns), or null where no figure exists.
+export function japanIndex(clusterId) {
+  const states = JP_STATES[clusterId].filter((s) => JP_PRESENCE.states[s])
+  if (!states.length) return null
+  const n = states.reduce((t, s) => t + JP_PRESENCE.states[s].companies, 0)
+  return { value: Math.round((100 * Math.log1p(n)) / JP_MAX), companies: n, checked: states.every((s) => JP_PRESENCE.states[s].checked), states }
+}
+
 export const CLUSTERS = [
   {
     id: 'pune', name: 'Pune – Chakan', state: 'mh', lon: 73.86, lat: 18.52,
@@ -276,5 +306,12 @@ export const PARTNERS = [
   },
 ]
 
+// Replace the illustrative Japan index with the sourced one wherever a figure exists.
+for (const c of CLUSTERS) {
+  const jp = japanIndex(c.id)
+  c.japanSource = jp
+  if (jp) c.japan = jp.value
+}
+
 export const DATASET_NOTE =
-  'Prototype dataset: 6 cluster profiles and 10 fictional partner profiles. Indices are illustrative and every fact carries a source, date and verification status.'
+  'Japan-presence index uses Embassy of Japan & JETRO company counts (Oct 2024). Demand, logistics, talent and cost indices are illustrative. Partner profiles are fictional.'
