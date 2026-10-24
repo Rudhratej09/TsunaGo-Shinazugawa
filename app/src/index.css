@@ -642,3 +642,6 @@ details summary { cursor: pointer; margin-top: 6px; }
 .partner-pick { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
 .partner-pick select { max-width: 420px; }
 .field .inline-input { display: flex; text-transform: none; letter-spacing: 0; font-size: 14px; color: var(--ink-2); margin: 10px 0 0; }
+
+.step-nav-wrap { padding-top: 0 !important; padding-bottom: 64px !important; flex: none; }
+.step-nav { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-top: 1px solid var(--hair); padding-top: 24px; }

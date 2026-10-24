@@ -4,7 +4,7 @@ import Sakura from './components/Sakura.jsx'
 import Intro from './components/Intro.jsx'
 import { BRAND } from './brand.js'
 import SidePanel from './components/SidePanel.jsx'
-import { ChecklistDrawer, progress, StageTabs } from './components/Journey.jsx'
+import { ChecklistDrawer, progress, StageTabs, StepNav } from './components/Journey.jsx'
 import Home from './pages/Home.jsx'
 import { NeedsStep, ProfileStep } from './pages/Setup.jsx'
 import Options from './pages/Options.jsx'
@@ -201,6 +201,7 @@ export default function App() {
             {route === 'needs' && (answers.profile ? <NeedsStep {...props} /> : <ProfileStep answers={answers} pick={pick} go={go} />)}
             {(route === 'market' || route === 'partners') && (answers.profile ? <Options {...props} view={route} /> : <ProfileStep answers={answers} pick={pick} go={go} />)}
             {route === 'plan' && (answers.profile ? <Plan {...props} /> : <ProfileStep answers={answers} pick={pick} go={go} />)}
+            {inPlan && <div className="page step-nav-wrap"><StepNav route={route} go={go} state={journeyState} onChecklist={() => setChecklist(true)} /></div>}
           </motion.main>
         </AnimatePresence>
 

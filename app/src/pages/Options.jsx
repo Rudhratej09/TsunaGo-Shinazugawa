@@ -105,11 +105,7 @@ export default function Options({ answers, set, result, open, selected, shortlis
       </LayoutGroup>
       </>}
 
-      <div style={{ marginTop: 28, display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-        <button className="btn ghost" onClick={() => go('needs')}>{t('← Requirements')}</button>
-        <span className="small muted" style={{ maxWidth: 460 }}>{view === 'partners' && t(DATASET_NOTE)}</span>
-        {view === 'partners' && <button className="btn" onClick={() => go('plan')}>{t('Plan the first pilot →')}</button>}
-      </div>
+      {view === 'partners' && <p className="small muted" style={{ marginTop: 20 }}>{t(DATASET_NOTE)}</p>}
     </div>
   )
 }

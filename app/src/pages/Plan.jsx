@@ -4,7 +4,7 @@ import { useI18n } from '../i18n.jsx'
 
 const OWNERS = { HQ: 'Your HQ (Japan)', Partner: 'Local partner', Expert: 'Expert review', TsunaGo: 'TsunaGo' }
 
-export default function Plan({ answers, result, shortlist, open, go }) {
+export default function Plan({ answers, result, shortlist, open }) {
   const { t, lang } = useI18n()
   const tv = (vars) => vars && Object.fromEntries(Object.entries(vars).map(([k, v]) => [k, t(String(v))]))
   const chosen = shortlist.length
@@ -84,10 +84,6 @@ export default function Plan({ answers, result, shortlist, open, go }) {
       </div>
 
       <p className="small muted" style={{ marginTop: 22 }}>{t('Legal, tax and compliance steps remain expert-reviewed tasks. TsunaGo prepares the brief; qualified advisers sign off.')}</p>
-      <div className="no-print" style={{ marginTop: 18, display: 'flex', justifyContent: 'space-between' }}>
-        <button className="btn ghost" onClick={() => go('partners')}>{t('← Entry options')}</button>
-        <button className="btn" onClick={() => go('why')}>{t('Why TsunaGo →')}</button>
-      </div>
     </div>
   )
 }

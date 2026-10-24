@@ -141,3 +141,30 @@ export function ChecklistDrawer({ open, onClose, route, go, state }) {
     </AnimatePresence>
   )
 }
+
+// The main path through the stages; optional pages (Scout, Analyze, coach, negotiation) sit
+// beside the page they belong to, so Previous/Next always follows the tab order.
+const FLOW = ['profile', 'needs', 'market', 'partners', 'advisor', 'compliance', 'culture', 'plan']
+const ANCHOR = { scout: 'partners', analyze: 'partners', coach: 'culture', negotiate: 'culture' }
+
+export function StepNav({ route, go, state, onChecklist }) {
+  const { t } = useI18n()
+  const items = JOURNEY.flatMap((g) => g.items.map((i) => ({ ...i, stage: g })))
+  const at = FLOW.indexOf(ANCHOR[route] || route)
+  if (at < 0) return null
+  const find = (r) => items.find((i) => i.route === r)
+  const prev = at > 0 ? find(FLOW[at - 1]) : null
+  // From an optional page, "next" is the next main stage; from a main page, the one after it.
+  const next = at < FLOW.length - 1 ? find(FLOW[at + 1]) : null
+  const back = ANCHOR[route] ? find(ANCHOR[route]) : prev
+  const locked = next?.needsProfile && !state.answers.profile
+  const label = (i) => `${i.stage.num} · ${t(i.tab || i.stage.short)}`
+  return (
+    <nav className="step-nav" aria-label={t('Steps')}>
+      {back ? <button className="btn ghost" onClick={() => go(back.route)}>← {label(back)}</button> : <span />}
+      {next
+        ? <button className="btn" disabled={locked} title={locked ? t('Choose a company profile first') : undefined} onClick={() => go(next.route)}>{t('Next')}: {label(next)} →</button>
+        : <button className="btn" onClick={onChecklist}>{t('Review my checklist')} ☑</button>}
+    </nav>
+  )
+}

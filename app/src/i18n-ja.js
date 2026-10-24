@@ -870,4 +870,6 @@ export const JA = {
   'Have a chartered accountant or lawyer check it before you act on it.': '実行前に公認会計士または弁護士に確認してもらいましょう。',
   'Firm (optional)': '事務所名（任意）',
   'Decision support, not legal or tax advice. Have a chartered accountant or lawyer check it before you act on it.': '意思決定の支援であり、法務・税務の助言ではありません。実行前に公認会計士または弁護士に確認してもらいましょう。',
+  'Review my checklist': 'チェックリストを確認',
+  'Next': '次へ',
 }
