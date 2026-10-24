@@ -34,7 +34,13 @@ export const JOURNEY = [
       { route: 'compliance', key: 'signoff', label: 'Professional sign-off', done: (s) => s.signedOff, optional: true },
     ],
   },
-  { stage: 'Culture & negotiation', short: 'Culture', num: '5', soon: true, items: [] },
+  {
+    stage: 'Culture & negotiation', short: 'Culture', num: '5', items: [
+      { route: 'culture', label: 'Japan ↔ India business playbook', tab: 'Playbook', done: (s) => s.visited.culture },
+      { route: 'coach', label: 'Message coach (AI)', tab: '✦ Message coach', done: (s) => s.coached, optional: true },
+      { route: 'negotiate', label: 'Negotiation prep (AI)', tab: '✦ Negotiation prep', done: (s) => s.negotiated, optional: true },
+    ],
+  },
   {
     stage: 'Pilot & long-term operations', short: 'Pilot & operations', num: '6', items: [
       { route: 'plan', label: 'Pilot plan', needsProfile: true, done: (s) => s.visited.plan },

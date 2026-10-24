@@ -601,3 +601,18 @@ details summary { cursor: pointer; margin-top: 6px; }
   .why-btn:not(.on) { display: none; }
   .lang-switch { margin-left: 6px; }
 }
+
+/* ---------- Culture & negotiation ---------- */
+.playbook tbody th { font-weight: 500; width: 16%; }
+.playbook td { width: 26%; color: var(--ink-2); }
+.playbook td.do, .roadmap td.do { color: var(--ink); background: var(--sakura-soft); }
+.checklist { margin: 0; padding-left: 1.3em; line-height: 1.9; }
+.msg-out { white-space: pre-wrap; font: inherit; font-size: 15px; line-height: 1.6; background: var(--paper-2); border-left: 2px solid var(--sakura-deep); padding: 12px 14px; margin: 6px 0; }
+.jp-out { font-family: var(--jp); }
+.ladder { margin: 0; padding-left: 1.4em; }
+.ladder li { margin: 8px 0; }
+.ladder .give, .ladder .get { display: block; }
+.ladder .give { color: var(--shu); }
+.ladder .get { color: var(--pass); }
+.phrase { display: grid; gap: 2px; padding: 8px 0; border-bottom: 1px solid var(--hair-2); }
+.phrase b { font-weight: 500; }

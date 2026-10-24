@@ -64,6 +64,16 @@ changes, a professional sign-off record, and CSV / print export.
 Rules: `app/src/data/compliance.js`; engine: `app/src/lib/compliance.js`. Rules marked
 "conflict" or "general" must be checked against the primary source before you rely on them.
 
+## Culture & negotiation
+
+Stage 5 has three tabs. **Playbook**: Japan-vs-India business norms side by side (decisions,
+what "yes" and "we will consider" mean, price talks, timelines, channels, hierarchy, contracts,
+payment, calendar), each ending in a concrete action, plus a pre-meeting checklist.
+**Message coach** (AI): rewrites a Japanese or English message for an Indian counterpart, with a
+Japanese back-translation, what changed and how the original could be misread.
+**Negotiation prep** (AI): for a shortlisted partner and the terms on the table, their likely
+asks, a give-and-get concession ladder, red lines and phrases to use. Server: `app/server/culture.js`.
+
 ## Advisor (AI market-entry advisor)
 
 **Advisor** is a chat with a senior India market-entry advisor. Its instructions are the team's

@@ -14,6 +14,7 @@ import Analyze from './pages/Analyze.jsx'
 import Scout from './pages/Scout.jsx'
 import Advisor from './pages/Advisor.jsx'
 import Compliance from './pages/Compliance.jsx'
+import Culture from './pages/Culture.jsx'
 import { PROFILES } from './data/catalog.js'
 import { DEFAULT_PRIORITIES, evaluate } from './lib/engine.js'
 import { LangProvider } from './i18n.jsx'
@@ -26,7 +27,7 @@ const STEPS = [
   ['options', 'Options'],
   ['plan', 'Pilot plan'],
 ]
-const ROUTES = ['home', 'why', 'analyze', 'scout', 'advisor', 'compliance', 'market', 'partners', ...STEPS.map((s) => s[0])]
+const ROUTES = ['home', 'why', 'analyze', 'scout', 'advisor', 'compliance', 'market', 'partners', 'culture', 'coach', 'negotiate', ...STEPS.map((s) => s[0])]
 // Pages without the journey sidebar.
 const LANDING = ['home', 'why']
 
@@ -140,7 +141,7 @@ export default function App() {
   const pick = (p) => setAnswers((a) => ({ ...a, ...p.defaults, profile: p.id }))
   const open = (kind, data) => setPanel({ kind, id: data.id })
   const toggleShortlist = (id) => setShortlist((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]))
-  const journeyState = { answers, visited, shortlist, signedOff: !!readStore('tsunago-compliance-signoff', {}).done, advisorStarted: readStore('tsunago-advisor-chat', []).length > 0 }
+  const journeyState = { answers, visited, shortlist, signedOff: !!readStore('tsunago-compliance-signoff', {}).done, advisorStarted: readStore('tsunago-advisor-chat', []).length > 0, coached: !!readStore('tsunago-coach', null), negotiated: !!readStore('tsunago-negotiate', null) }
   const inPlan = !LANDING.includes(route)
   const prog = progress(journeyState)
 
@@ -181,6 +182,7 @@ export default function App() {
             )}
             {route === 'advisor' && <Advisor answers={answers} go={go} />}
             {route === 'compliance' && <Compliance answers={answers} />}
+            {['culture', 'coach', 'negotiate'].includes(route) && <Culture view={route} answers={answers} result={result} shortlist={shortlist} go={go} />}
             {route === 'analyze' && (
               <Analyze answers={answers} customPartners={customPartners} open={open} go={go}
                 addPartner={(p) => setCustomPartners((list) => [...list.filter((x) => x.id !== p.id), p])} />
