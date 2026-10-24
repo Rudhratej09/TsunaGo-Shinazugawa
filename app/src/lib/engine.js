@@ -19,11 +19,11 @@ export const MODEL_COPY = {
 const budgetCap = (a) => BUDGETS.find((b) => b.id === a.budget).capLakh
 export const industryLabel = (id) => INDUSTRIES.find((i) => i.id === id).label
 
-export function rankClusters(a) {
+export function rankClusters(a, all = PARTNERS) {
   const model = serviceModel(a)
   const limited = a.budget === 'limited'
   return CLUSTERS.map((c) => {
-    const backers = PARTNERS.filter((p) => p.clusters.includes(c.id) && checkPartner(p, a).eligible)
+    const backers = all.filter((p) => p.clusters.includes(c.id) && checkPartner(p, a).eligible)
     const support = clamp(backers.length * 34)
     const parts = {
       demand: c.demand[a.industry],
@@ -77,6 +77,7 @@ export function checkPartner(p, a) {
 
   const open = p.evidence.filter((e) => e.status !== 'verified').map((e) => ({ partner: p.name, fact: e.fact, source: e.source }))
   p.references.filter((r) => r.status !== 'verified').forEach((r) => open.push({ partner: p.name, fact: `Reference: ${r.label}`, source: 'Reference list' }))
+  ;(p.unknowns || []).forEach((u) => open.push({ partner: p.name, fact: u, source: 'Not stated in brochure' }))
 
   const eligible = !checks.some((c) => c.status === 'fail')
   return { checks, eligible, open }
@@ -100,9 +101,10 @@ export function scorePartner(p, a, topClusters) {
   return { sub, score, coverage: covered }
 }
 
-export function evaluate(a) {
-  const clusters = rankClusters(a)
-  const partners = PARTNERS.map((p) => {
+export function evaluate(a, extra = []) {
+  const all = [...PARTNERS, ...extra.filter((x) => !PARTNERS.some((p) => p.id === x.id))]
+  const clusters = rankClusters(a, all)
+  const partners = all.map((p) => {
     const c = checkPartner(p, a)
     const s = scorePartner(p, a, clusters)
     return { ...p, ...c, ...s }

@@ -9,6 +9,7 @@ import { NeedsStep, ProfileStep } from './pages/Setup.jsx'
 import Options from './pages/Options.jsx'
 import Plan from './pages/Plan.jsx'
 import Why from './pages/Why.jsx'
+import Analyze from './pages/Analyze.jsx'
 import { PROFILES } from './data/catalog.js'
 import { DEFAULT_PRIORITIES, evaluate } from './lib/engine.js'
 
@@ -18,7 +19,7 @@ const STEPS = [
   ['options', 'Options'],
   ['plan', 'Pilot plan'],
 ]
-const ROUTES = ['home', 'why', ...STEPS.map((s) => s[0])]
+const ROUTES = ['home', 'why', 'analyze', ...STEPS.map((s) => s[0])]
 
 const initialAnswers = () => {
   const p = PROFILES[1]
@@ -35,6 +36,7 @@ export default function App() {
   const [answers, setAnswers] = useState(initialAnswers)
   const [panel, setPanel] = useState(null)
   const [shortlist, setShortlist] = useState([])
+  const [customPartners, setCustomPartners] = useState([])
   // Play the opening animation only when the site is opened on the home page.
   const [intro, setIntro] = useState(() =>
     BRAND.intro && readRoute() === 'home' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'playing' : 'done')
@@ -52,7 +54,7 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [])
 
-  const result = useMemo(() => evaluate(answers), [answers])
+  const result = useMemo(() => evaluate(answers, customPartners), [answers, customPartners])
 
   // Keep an open panel in sync when answers change (e.g. flipping service model A/B).
   const livePanel = useMemo(() => {
@@ -83,7 +85,8 @@ export default function App() {
                 <i>{i + 1}</i>{label}
               </button>
             ))}
-            <button className={route === 'why' ? 'on' : ''} onClick={() => go('why')} style={{ marginLeft: 12, borderLeft: '1px solid var(--hair)' }}>Why TsunaGo</button>
+            <button className={route === 'analyze' ? 'on' : ''} onClick={() => go('analyze')} style={{ marginLeft: 12, borderLeft: '1px solid var(--hair)' }}>✦ Analyze partner</button>
+            <button className={route === 'why' ? 'on' : ''} onClick={() => go('why')}>Why TsunaGo</button>
           </nav>
         </header>
 
@@ -97,6 +100,10 @@ export default function App() {
           <motion.main key={route} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.35 }} style={{ flex: 1 }}>
             {route === 'home' && <Home go={go} intro={intro} />}
             {route === 'why' && <Why go={go} />}
+            {route === 'analyze' && (
+              <Analyze answers={answers} customPartners={customPartners} open={open} go={go}
+                addPartner={(p) => setCustomPartners((list) => [...list.filter((x) => x.id !== p.id), p])} />
+            )}
             {route === 'profile' && <ProfileStep answers={answers} pick={pick} go={go} />}
             {route === 'needs' && (answers.profile ? <NeedsStep {...props} /> : <ProfileStep answers={answers} pick={pick} go={go} />)}
             {route === 'options' && (answers.profile ? <Options {...props} /> : <ProfileStep answers={answers} pick={pick} go={go} />)}

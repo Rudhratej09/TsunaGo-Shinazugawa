@@ -65,7 +65,7 @@ function PartnerView({ p, answers, result, onClose, starred, onStar }) {
       <Head eyebrow={`${p.type} · ${p.hq.city}`} title={p.name} onClose={onClose} tabs={['Analysis', 'Regions', 'Costs', 'Evidence']} tab={tab} setTab={setTab}>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
           <span className={`verdict ${ai.verdict}`}>{ai.verdictText}</span>
-          <span className="tag">Verified {p.lastVerified}</span>
+          <span className="tag">{p.aiExtracted ? `✦ AI-extracted ${p.lastVerified} · unverified` : `Verified ${p.lastVerified}`}</span>
           <button className={`tag ${starred ? 'sakura' : 'ink'}`} style={{ cursor: 'pointer' }} onClick={onStar}>
             {starred ? '✿ Shortlisted' : '+ Add to shortlist'}
           </button>

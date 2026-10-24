@@ -64,7 +64,8 @@ export default function Options({ answers, set, result, open, selected, shortlis
 
           <div className="box">
             <div className="list-head" style={{ flexWrap: 'wrap' }}>
-              <span className="h3">Partners</span>
+              <span style={{ display: 'flex', gap: 12, alignItems: 'baseline' }}><span className="h3">Partners</span>
+                <button className="link small" onClick={() => go('analyze')}>+ Analyze a new one with AI ✦</button></span>
               <div className="seg">
                 {FILTERS.map((f) => <button key={f} className={filter === f ? 'on' : ''} onClick={() => setFilter(f)} style={{ padding: '5px 10px', fontSize: 14 }}>{f}</button>)}
               </div>
@@ -79,7 +80,7 @@ export default function Options({ answers, set, result, open, selected, shortlis
                   <span className="rank">{p.eligible ? i + 1 : '–'}</span>
                   <span>
                     <span className="name">{p.name}</span>
-                    <span className="meta">{p.type} · {p.hq.city}{!p.eligible && <span style={{ color: 'var(--shu)' }}> · {p.checks.find((c) => c.status === 'fail').short} ✕</span>}</span>
+                    <span className="meta">{p.aiExtracted && <span style={{ color: 'var(--sakura-deep)' }}>✦ AI-extracted · </span>}{p.type} · {p.hq.city}{!p.eligible && <span style={{ color: 'var(--shu)' }}> · {p.checks.find((c) => c.status === 'fail').short} ✕</span>}</span>
                   </span>
                   <div className="bar hide-sm"><motion.i layout style={{ width: `${p.score}%`, background: p.eligible ? undefined : 'var(--shu)' }} /></div>
                   <span className="pips hide-sm">{p.checks.map((c) => <span key={c.id} className={`pip ${c.status}`} title={`${c.label}: ${c.status}`} />)}</span>

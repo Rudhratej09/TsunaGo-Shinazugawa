@@ -52,7 +52,7 @@ export default function IndiaMap({ presence = {}, hq, clusters = [], highlightCl
     return out
   }, [presence, animateKey])
 
-  const hqXY = hq ? project(hq.lon, hq.lat) : null
+  const hqXY = hq && hq.lon != null ? project(hq.lon, hq.lat) : null
 
   return (
     <svg viewBox="-70 -10 700 716" preserveAspectRatio="xMidYMid meet" style={{ width: '100%', height, display: 'block' }} role="img"
