@@ -51,6 +51,7 @@ function profileFromAnswers(a) {
   const label = (list, id) => list.find((x) => x.id === id)?.label || ''
   return {
     homeCountry: 'Japan',
+    products: a.product || '',
     buyerType: `${label(INDUSTRIES, a.industry)} manufacturers (B2B)`,
     investment: label(BUDGETS, a.budget),
     contacts: label(PRESENCE, a.presence),

@@ -2,7 +2,7 @@
 // OpenAI-compatible providers (Groq by default) get a web_search function backed by Tavily;
 // Claude uses Anthropic's server-side web search tool.
 import Anthropic from '@anthropic-ai/sdk'
-import { llmConfig, LLMError } from './llm.js'
+import { llmConfig, LLMError, postChat, providerError } from './llm.js'
 import { tavilySearch } from './search.js'
 
 const SEARCH_TOOL = {
@@ -22,23 +22,6 @@ const MAX_ROUNDS = 4
 // Leave room inside the 60 s serverless limit for the final answer.
 const SEARCH_BUDGET_MS = 30_000
 
-async function post(cfg, body) {
-  const ctrl = new AbortController()
-  const timer = setTimeout(() => ctrl.abort(), 50_000)
-  try {
-    return await fetch(`${cfg.baseURL}/chat/completions`, {
-      method: 'POST',
-      signal: ctrl.signal,
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${cfg.apiKey}` },
-      body: JSON.stringify(body),
-    })
-  } catch (e) {
-    throw new LLMError(e.name === 'AbortError' ? 'timeout' : 'network', e.name === 'AbortError' ? 'The model took too long to answer.' : `Could not reach ${cfg.name}.`)
-  } finally {
-    clearTimeout(timer)
-  }
-}
-
 async function openAIChat(cfg, env, { system, messages, maxTokens, search }) {
   const t0 = Date.now()
   const convo = [{ role: 'system', content: system }, ...messages]
@@ -46,9 +29,9 @@ async function openAIChat(cfg, env, { system, messages, maxTokens, search }) {
   let tools = search
   for (let round = 0; ; round++) {
     const final = !tools || round >= MAX_ROUNDS || Date.now() - t0 > SEARCH_BUDGET_MS
-    const body = { model: cfg.model, temperature: 0.3, max_tokens: maxTokens, messages: convo }
+    const body = { temperature: 0.3, max_tokens: maxTokens, messages: convo }
     if (tools) Object.assign(body, { tools: [SEARCH_TOOL], tool_choice: final ? 'none' : 'auto' })
-    const res = await post(cfg, body)
+    const { res, model } = await postChat(cfg, body)
     if (res.status === 400 && tools) {
       // Some open models occasionally emit a malformed tool call; answer without search instead.
       const err = await res.json().catch(() => ({}))
@@ -56,11 +39,9 @@ async function openAIChat(cfg, env, { system, messages, maxTokens, search }) {
         tools = false
         continue
       }
-      throw new LLMError('api', `${cfg.name} rejected the request.`)
+      throw await providerError(cfg, new Response(JSON.stringify(err), { status: 400 }), model)
     }
-    if (res.status === 401 || res.status === 403) throw new LLMError('auth', `The ${cfg.name} API key was rejected.`)
-    if (res.status === 429) throw new LLMError('rate_limit', `${cfg.name} rate limit reached — wait a moment and retry.`, 429)
-    if (!res.ok) throw new LLMError('api', `${cfg.name} API error ${res.status}.`)
+    if (!res.ok) throw await providerError(cfg, res, model)
     const data = await res.json()
     const msg = data.choices?.[0]?.message || {}
     const calls = msg.tool_calls || []
@@ -83,7 +64,7 @@ async function openAIChat(cfg, env, { system, messages, maxTokens, search }) {
     }
     if (data.choices?.[0]?.finish_reason === 'length') throw new LLMError('truncated', 'The answer was cut off — ask for one section at a time.', 422)
     if (!msg.content) throw new LLMError('empty', 'The model returned nothing.')
-    return { text: msg.content, sources, model: data.model || cfg.model, provider: cfg.name, ms: Date.now() - t0 }
+    return { text: msg.content, sources, model: data.model || model, provider: cfg.name, ms: Date.now() - t0 }
   }
 }
 

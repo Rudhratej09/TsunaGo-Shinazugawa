@@ -79,7 +79,10 @@ export async function requireUser(req, res, env) {
 export async function handleAuth(req, res, env) {
   const action = new URL(req.url, 'http://x').searchParams.get('action')
   if (action === 'me') {
-    return send(res, 200, { enabled: authEnabled(env), clientId: env.GOOGLE_CLIENT_ID || null, user: await currentUser(req, env) })
+    // Vercel sets VERCEL_PROJECT_PRODUCTION_URL; Google only accepts origins registered in the
+    // Cloud console, so per-deployment preview URLs must send people to the production site.
+    const productionHost = env.PUBLIC_HOST || env.VERCEL_PROJECT_PRODUCTION_URL || null
+    return send(res, 200, { enabled: authEnabled(env), clientId: env.GOOGLE_CLIENT_ID || null, productionHost, user: await currentUser(req, env) })
   }
   if (req.method !== 'POST') return send(res, 405, { error: 'method', message: 'Use POST.' })
   if (!sameOrigin(req)) return send(res, 403, { error: 'origin', message: 'Cross-site request refused.' })

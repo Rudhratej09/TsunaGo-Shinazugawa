@@ -59,12 +59,15 @@ export function NeedsStep({ answers, set, go }) {
           <div className="field"><label>{t('Own service team for India?')}</label><Seg value={answers.ownService} options={YESNO} onChange={(v) => set({ ownService: v })} /></div>
           <div className="field"><label>{t('Existing Indian presence')}</label><Seg value={answers.presence} options={PRESENCE} onChange={(v) => set({ presence: v })} /></div>
           <div className="field"><label>{t('Preferred launch timing')}</label><Seg value={answers.timing} options={TIMINGS} onChange={(v) => set({ timing: v })} /></div>
+          <div className="field" style={{ gridColumn: '1 / -1', borderRight: 0, borderBottom: 0 }}><label>{t('Product and use case (optional)')}</label>
+            <input className="input" value={answers.product || ''} maxLength={200} placeholder={t('e.g. Inline vision inspection for machined parts')} onChange={(e) => set({ product: e.target.value })} /></div>
         </div>
         <div className="prio">
           <label className="eyebrow" style={{ marginBottom: 8 }}>{t('Partner priorities')}</label>
           {PRIORITIES.map((p) => (
             <div className="prio-row" key={p.id}>
-              <div><b>{t(p.label)}</b><span>{t(p.hint)}</span></div>
+              <div><b>{t(p.label)}</b><span>{t(p.hint)}</span>
+                {p.id === 'technical' && model === 'B' && <span className="weight-note">{t('×1.6 weight: you need local installation and have no service team in India')}</span>}</div>
               <div className="dots" role="radiogroup" aria-label={t(p.label)}>
                 {[1, 2, 3, 4, 5].map((n) => (
                   <button key={n} aria-label={`${n} / 5`} className={`${answers.priorities[p.id] >= n ? 'on' : ''} ${p.id === 'technical' && model === 'B' ? 'sakura' : ''}`}
