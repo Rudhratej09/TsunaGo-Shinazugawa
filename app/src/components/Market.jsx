@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import IndiaMap from './IndiaMap.jsx'
 import { CHECKED_ON, marketFor } from '../data/market.js'
+import { JP_PRESENCE } from '../data/catalog.js'
 import { STATE_NAMES } from '../lib/geo.js'
 import { industryLabel } from '../lib/engine.js'
 import { useI18n } from '../i18n.jsx'
@@ -27,11 +28,20 @@ export default function Market({ answers, model, onContinue }) {
   const m = marketFor(answers.industry, { needsService: model === 'B' })
   const [cell, setCell] = useState(null)
   const [srcOpen, setSrcOpen] = useState(false)
-  const pick = (state, key) => setCell(cell && cell.state === state && cell.key === key ? null : { state, key })
+  const [mapState, setMapState] = useState(null)
+  const pick = (state, key) => {
+    setMapState(state)
+    setCell(cell && cell.state === state && cell.key === key ? null : { state, key })
+  }
+  const focusState = (id) => {
+    setCell(null)
+    setMapState(mapState === id ? null : id)
+  }
+  const focusRow = mapState && m.rows.find((r) => r.state === mapState)
   const detail = cell && m.rows.find((r) => r.state === cell.state)[cell.key]
   const names = m.suggested.map((s) => t(STATE_NAMES[s]))
   const presence = Object.fromEntries(m.rows.map((r) => [r.state, m.suggested.includes(r.state) ? 1 : 0.45]))
-  const sector = t(industryLabel(answers.industry))
+  const sector = (answers.customIndustry?.trim() ? `${answers.customIndustry.trim()} (${t('data')}: ${t(industryLabel(answers.industry))})` : t(industryLabel(answers.industry)))
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
@@ -72,7 +82,7 @@ export default function Market({ answers, model, onContinue }) {
           </div>
           <div style={{ overflowX: 'auto' }}>
             <table className="compare-states">
-              <thead><tr><th />{m.rows.map((r) => <th key={r.state} className={m.suggested.includes(r.state) ? 'pick' : ''}>{t(STATE_NAMES[r.state])}</th>)}</tr></thead>
+              <thead><tr><th />{m.rows.map((r) => <th key={r.state} className={`${m.suggested.includes(r.state) ? 'pick' : ''} ${mapState === r.state ? 'sel' : ''}`}><button className="th-btn" onClick={() => focusState(r.state)}>{t(STATE_NAMES[r.state])}</button></th>)}</tr></thead>
               <tbody>
                 {FACTORS.map(([key, label]) => (
                   <tr key={key}>
@@ -105,8 +115,32 @@ export default function Market({ answers, model, onContinue }) {
         </div>
 
         <div className="map-wrap">
-          <IndiaMap presence={presence} animateKey={`mkt-${answers.industry}`} height={380} />
-          <div className="map-legend"><span><i style={{ background: '#f3b4c4' }} />{t('Compared states · darker = suggested')}</span></div>
+          <IndiaMap presence={presence} animateKey={`mkt-${answers.industry}`} height={380} onStateClick={focusState} selected={mapState} />
+          <div className="map-legend"><span><i style={{ background: '#f3b4c4' }} />{t('Compared states · darker = suggested')}</span><span className="small muted">{t('Click any state')}</span></div>
+          {mapState && (
+            <motion.div className="cell state-card" key={mapState} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <span className="h3">{t(STATE_NAMES[mapState])}</span>
+                <button className="link small" onClick={() => setMapState(null)} aria-label={t('Close')}>✕</button>
+              </div>
+              {focusRow ? (
+                <>
+                  {m.suggested.includes(mapState) && <div className="tag sakura" style={{ marginTop: 6 }}>{t('Suggested market')}</div>}
+                  <dl className="state-facts">
+                    {FACTORS.map(([key, label]) => (
+                      <div key={key}><dt>{t(label)} <span className={`rating r-${focusRow[key].rating.replace(/\s/g, '-').toLowerCase()}`}>{t(focusRow[key].rating)}</span></dt>
+                        <dd>{focusRow[key].why[lang]}{focusRow[key].src && <> <a href={focusRow[key].src.url} target="_blank" rel="noreferrer" className="src">{focusRow[key].src.date}</a></>}</dd></div>
+                    ))}
+                  </dl>
+                </>
+              ) : (
+                <>
+                  <p className="small" style={{ margin: '8px 0' }}>{t('Not in this comparison: we have no sourced figures for this sector in this state yet, so it stays Unknown rather than guessed.')}</p>
+                  {JP_PRESENCE.states[mapState] && <p className="small" style={{ margin: 0 }}>{t('Japanese companies listed here: {n}', { n: JP_PRESENCE.states[mapState].companies })} · <a href={JP_PRESENCE.url} target="_blank" rel="noreferrer">{t('source')}</a></p>}
+                </>
+              )}
+            </motion.div>
+          )}
         </div>
       </div>
 

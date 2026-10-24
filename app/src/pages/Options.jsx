@@ -27,7 +27,7 @@ export default function Options({ answers, set, result, open, selected, shortlis
         <div>
           <div className="eyebrow">{view === 'market' ? t('Stage 1 · Understand the market') : t('Stage 2 · Find & verify partners')}</div>
           <h1 className="h2">{view === 'market' ? t('India market & regions') : t('Your entry options')} {lang === 'en' && <span className="jp" style={{ fontSize: '0.6em' }}>{view === 'market' ? '市場と地域' : '参入オプション'}</span>}</h1>
-          <p className="muted" style={{ margin: 0 }}>{t(industryLabel(answers.industry))} · {t(MODEL_COPY[model].route)}. {t('Click any region or partner for full analytics.')}</p>
+          <p className="muted" style={{ margin: 0 }}>{(answers.customIndustry?.trim() ? `${answers.customIndustry.trim()} (${t('data')}: ${t(industryLabel(answers.industry))})` : t(industryLabel(answers.industry)))} · {t(MODEL_COPY[model].route)}. {t('Click any region or partner for full analytics.')}</p>
         </div>
         <div>
           <div className="small muted" style={{ marginBottom: 6, letterSpacing: '.12em', textTransform: 'uppercase', fontSize: 13 }}>{t('What if… service model')}</div>

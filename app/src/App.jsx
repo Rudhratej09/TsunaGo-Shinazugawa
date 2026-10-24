@@ -66,6 +66,15 @@ export default function App() {
   const [shortlist, setShortlist] = useState(() => readStore('tsunago-shortlist', []))
   const [customPartners, setCustomPartners] = useState([])
   const [checklist, setChecklist] = useState(false)
+  const [petals, setPetals] = useState(() => readStore('tsunago-petals', true))
+  const togglePetals = () => setPetals((on) => {
+    try {
+      localStorage.setItem('tsunago-petals', JSON.stringify(!on))
+    } catch {
+      // storage unavailable: the toggle still works for this visit
+    }
+    return !on
+  })
   const closeChecklist = useCallback(() => setChecklist(false), [])
   // Keep the plan across reloads (answers and shortlist live only in this browser).
   useEffect(() => {
@@ -149,13 +158,14 @@ export default function App() {
 
   return (
     <LangProvider value={{ lang, setLang }}>
-      <Sakura density={route === 'home' ? 34 : 16} />
+      {petals && <Sakura density={route === 'home' ? 34 : 16} />}
       <div className="app">
         <header className="top">
           <button className="brand" onClick={() => go('home')} aria-label={`${BRAND.name} home`}><img src={BRAND.logo} alt={BRAND.name} /></button>
           <nav className="steps" aria-label={t('Site')}>
             {LANDING.includes(route) && <button onClick={() => go(answers.profile ? 'market' : 'profile')}>{answers.profile ? t('Continue my plan →') : t('Start')}</button>}
             <button className={`why-btn ${route === 'why' ? 'on' : ''}`} onClick={() => go('why')}>{t('Why TsunaGo')}</button>
+            <button className={`petal-btn ${petals ? '' : 'off'}`} onClick={togglePetals} aria-pressed={petals} title={petals ? t('Turn petals off') : t('Turn petals on')}>✿</button>
             <button className="checklist-btn" onClick={() => setChecklist(true)} aria-haspopup="dialog">
               ☑ <span className="cl-label">{t('Checklist')}</span> <b>{prog.done}/{prog.total}</b>
             </button>
@@ -181,7 +191,7 @@ export default function App() {
                 addPartners={(list) => setCustomPartners((cur) => [...cur.filter((x) => !list.some((p) => p.id === x.id)), ...list])} />
             )}
             {route === 'advisor' && <Advisor answers={answers} go={go} />}
-            {route === 'compliance' && <Compliance answers={answers} />}
+            {route === 'compliance' && <Compliance answers={answers} result={result} shortlist={shortlist} go={go} />}
             {['culture', 'coach', 'negotiate'].includes(route) && <Culture view={route} answers={answers} result={result} shortlist={shortlist} go={go} />}
             {route === 'analyze' && (
               <Analyze answers={answers} customPartners={customPartners} open={open} go={go}

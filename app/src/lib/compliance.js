@@ -6,7 +6,7 @@ const mid = ([a, b]) => Math.round((a + b) / 2)
 
 export function ownerFor(step, input) {
   if (step.owner !== 'importer') return step.owner
-  return input.mode === 'export' || input.mode === 'lo' ? 'Indian partner' : 'Your Indian entity'
+  return input.mode === 'export' || input.mode === 'lo' ? input.partnerName || 'Indian partner' : 'Your Indian entity'
 }
 
 export function buildRoadmap(input) {

@@ -53,8 +53,27 @@ export function NeedsStep({ answers, set, go }) {
 
       <div className="box" style={{ marginTop: 28 }}>
         <div className="grid form" style={{ marginTop: 0 }}>
-          <div className="field"><label>{t('Target customer industry')}</label><Seg value={answers.industry} options={INDUSTRIES} onChange={(v) => set({ industry: v })} /></div>
-          <div className="field"><label>{t('Entry budget')}</label><Seg value={answers.budget} options={BUDGETS} onChange={(v) => set({ budget: v })} /></div>
+          <div className="field"><label>{t('Target customer industry')}</label>
+            <Seg value={answers.customIndustry != null ? 'other' : answers.industry} options={[...INDUSTRIES, { id: 'other', label: '+ Other' }]}
+              onChange={(v) => set(v === 'other' ? { customIndustry: answers.customIndustry ?? '' } : { industry: v, customIndustry: null })} />
+            {answers.customIndustry != null && (
+              <div className="custom-ind">
+                <input className="input" value={answers.customIndustry} maxLength={60} autoFocus placeholder={t('Your industry, e.g. Medical imaging')} onChange={(e) => set({ customIndustry: e.target.value })} />
+                <div className="small muted" style={{ margin: '8px 0 6px' }}>{t('Closest sector for market and partner data:')}</div>
+                <Seg value={answers.industry} options={INDUSTRIES} onChange={(v) => set({ industry: v })} />
+              </div>
+            )}
+          </div>
+          <div className="field"><label>{t('Entry budget')}</label>
+            <Seg value={answers.budget} options={[...BUDGETS, { id: 'custom', label: 'Custom amount' }]} onChange={(v) => set(v === 'custom' ? { budget: v, budgetLakh: answers.budgetLakh ?? 60 } : { budget: v })} />
+            {answers.budget === 'custom' && (
+              <label className="inline-input">
+                <span>₹</span>
+                <input className="input" type="number" min="1" step="5" value={answers.budgetLakh ?? ''} onChange={(e) => set({ budgetLakh: Math.max(0, +e.target.value) })} aria-label={t('Budget in INR lakh')} />
+                <span>{t('lakh for the first year (1 lakh = ₹100,000)')}</span>
+              </label>
+            )}
+          </div>
           <div className="field"><label>{t('Local installation needed?')}</label><Seg value={answers.localInstall} options={YESNO} onChange={(v) => set({ localInstall: v })} /></div>
           <div className="field"><label>{t('Own service team for India?')}</label><Seg value={answers.ownService} options={YESNO} onChange={(v) => set({ ownService: v })} /></div>
           <div className="field"><label>{t('Existing Indian presence')}</label><Seg value={answers.presence} options={PRESENCE} onChange={(v) => set({ presence: v })} /></div>

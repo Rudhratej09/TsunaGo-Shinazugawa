@@ -17,12 +17,14 @@ export const MODEL_COPY = {
   B: { title: 'We need local installation', route: 'Service-capable integrator', ja: '現地据付型' },
 }
 
-const budgetCap = (a) => BUDGETS.find((b) => b.id === a.budget).capLakh
+// A custom budget is entered in INR lakh; presets carry their own cap.
+export const budgetCap = (a) => (a.budget === 'custom' ? Math.max(0, Number(a.budgetLakh) || 0) : BUDGETS.find((b) => b.id === a.budget).capLakh)
+export const budgetLabel = (a) => (a.budget === 'custom' ? `₹${Number(a.budgetLakh) || 0} lakh (custom)` : BUDGETS.find((b) => b.id === a.budget).label)
 export const industryLabel = (id) => INDUSTRIES.find((i) => i.id === id).label
 
 export function rankClusters(a, all = PARTNERS) {
   const model = serviceModel(a)
-  const limited = a.budget === 'limited'
+  const limited = budgetCap(a) <= 40
   return CLUSTERS.map((c) => {
     const backers = all.filter((p) => p.clusters.includes(c.id) && checkPartner(p, a).eligible)
     const support = clamp(backers.length * 34)
