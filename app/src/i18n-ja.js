@@ -760,4 +760,6 @@ export const JA = {
   'Start · Requirements': 'はじめに · 要件',
   'Stage 4 · Regulation & compliance': 'ステージ4 · 規制・コンプライアンス',
   'India market & regions': 'インド市場と地域',
+  'AI Advisor: localization, pricing & entry model': 'AIアドバイザー：現地化・価格・参入モデル',
+  'Stage 3 · Localize product & pricing': 'ステージ3 · 製品・価格の現地化',
 }

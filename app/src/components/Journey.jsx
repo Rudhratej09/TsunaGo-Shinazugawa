@@ -23,7 +23,11 @@ export const JOURNEY = [
       { route: 'analyze', label: 'Analyze a brochure', done: (s) => s.visited.analyze, optional: true },
     ],
   },
-  { stage: 'Localize product & pricing', num: '3', soon: true, items: [] },
+  {
+    stage: 'Localize product & pricing', num: '3', items: [
+      { route: 'advisor', label: 'AI Advisor: localization, pricing & entry model', done: (s) => s.advisorStarted },
+    ],
+  },
   {
     stage: 'Regulation & compliance', num: '4', items: [
       { route: 'compliance', label: 'Compliance roadmap', done: (s) => s.visited.compliance },
@@ -72,12 +76,6 @@ export default function Journey({ route, go, state }) {
           })}
         </div>
       ))}
-      <div className="j-tools">
-        <div className="mini">{t('Ask anytime')}</div>
-        <button className={`j-item ${route === 'advisor' ? 'on' : ''}`} onClick={() => { setOpen(false); go('advisor') }}>
-          <span className="j-check" aria-hidden="true">✦</span><span>{t('AI Advisor')}</span>
-        </button>
-      </div>
     </nav>
   )
 

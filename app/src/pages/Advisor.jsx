@@ -149,7 +149,7 @@ export default function Advisor({ answers, go }) {
 
   return (
     <div className="page">
-      <div className="eyebrow">{t('AI advisor')}</div>
+      <div className="eyebrow">{t('Stage 3 · Localize product & pricing')}</div>
       <h1 className="h2">{t('India entry Advisor')}</h1>
       <p className="muted" style={{ maxWidth: 820 }}>
         {t('A senior market-entry advisor for your company: go / no-go screen, localization, price waterfall, entry model and partner profile, validation plan, and a decision brief. Every claim is tagged as a verified fact, your input, an estimate or a hypothesis.')}

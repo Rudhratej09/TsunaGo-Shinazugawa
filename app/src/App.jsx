@@ -138,7 +138,7 @@ export default function App() {
   const pick = (p) => setAnswers((a) => ({ ...a, ...p.defaults, profile: p.id }))
   const open = (kind, data) => setPanel({ kind, id: data.id })
   const toggleShortlist = (id) => setShortlist((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]))
-  const journeyState = { answers, visited, shortlist, signedOff: !!readStore('tsunago-compliance-signoff', {}).done }
+  const journeyState = { answers, visited, shortlist, signedOff: !!readStore('tsunago-compliance-signoff', {}).done, advisorStarted: readStore('tsunago-advisor-chat', []).length > 0 }
   const withSidebar = !LANDING.includes(route)
 
   const props = { answers, set, go, result, open, selected: panel?.id, shortlist, toggleShortlist }
