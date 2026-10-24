@@ -4,6 +4,7 @@ import Sakura from './components/Sakura.jsx'
 import Intro from './components/Intro.jsx'
 import { BRAND } from './brand.js'
 import SidePanel from './components/SidePanel.jsx'
+import VentureMenu from './components/VentureMenu.jsx'
 import { ChecklistDrawer, progress, StageTabs, StepNav } from './components/Journey.jsx'
 import Home from './pages/Home.jsx'
 import { NeedsStep, ProfileStep } from './pages/Setup.jsx'
@@ -20,6 +21,7 @@ import { DEFAULT_PRIORITIES, evaluate } from './lib/engine.js'
 import { LangProvider } from './i18n.jsx'
 import { GoogleButton, useAuth, UserMenu } from './auth.jsx'
 import { translate } from './i18n-core.js'
+import { vget, vset } from './lib/ventures.js'
 
 const STEPS = [
   ['profile', 'Profile'],
@@ -61,10 +63,10 @@ const readStore = (key, fallback) => {
 
 export default function App() {
   const [route, setRoute] = useState(readRoute)
-  const [answers, setAnswers] = useState(() => ({ ...initialAnswers(), ...readStore('tsunago-answers', {}) }))
+  const [answers, setAnswers] = useState(() => ({ ...initialAnswers(), ...vget('answers', {}) }))
   const [panel, setPanel] = useState(null)
-  const [shortlist, setShortlist] = useState(() => readStore('tsunago-shortlist', []))
-  const [customPartners, setCustomPartners] = useState([])
+  const [shortlist, setShortlist] = useState(() => vget('shortlist', []))
+  const [customPartners, setCustomPartners] = useState(() => vget('partners-custom', []))
   const [checklist, setChecklist] = useState(false)
   const [petals, setPetals] = useState(() => readStore('tsunago-petals', true))
   const togglePetals = () => setPetals((on) => {
@@ -78,24 +80,17 @@ export default function App() {
   const closeChecklist = useCallback(() => setChecklist(false), [])
   // Keep the plan across reloads (answers and shortlist live only in this browser).
   useEffect(() => {
-    try {
-      localStorage.setItem('tsunago-answers', JSON.stringify(answers))
-      localStorage.setItem('tsunago-shortlist', JSON.stringify(shortlist))
-    } catch {
-      // storage unavailable: the plan still works for this visit
-    }
-  }, [answers, shortlist])
+    vset('answers', answers)
+    vset('shortlist', shortlist)
+    vset('partners-custom', customPartners)
+  }, [answers, shortlist, customPartners])
 
   // Steps opened so far, for the journey checklist.
-  const [visited, setVisited] = useState(() => ({ ...readStore('tsunago-visited', {}), [readRoute()]: true }))
+  const [visited, setVisited] = useState(() => ({ ...vget('visited', {}), [readRoute()]: true }))
   const markVisited = useCallback((r) => setVisited((v) => {
     if (v[r]) return v
     const next = { ...v, [r]: true }
-    try {
-      localStorage.setItem('tsunago-visited', JSON.stringify(next))
-    } catch {
-      // storage unavailable: the checklist still works for this visit
-    }
+    vset('visited', next)
     return next
   }), [])
   const auth = useAuth()
@@ -150,7 +145,7 @@ export default function App() {
   const pick = (p) => setAnswers((a) => ({ ...a, ...p.defaults, profile: p.id }))
   const open = (kind, data) => setPanel({ kind, id: data.id })
   const toggleShortlist = (id) => setShortlist((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]))
-  const journeyState = { answers, visited, shortlist, signedOff: !!readStore('tsunago-compliance-signoff', {}).done, advisorStarted: readStore('tsunago-advisor-chat', []).length > 0, coached: !!readStore('tsunago-coach', null), negotiated: !!readStore('tsunago-negotiate', null) }
+  const journeyState = { answers, visited, shortlist, signedOff: !!vget('compliance-signoff', {}).done, advisorStarted: vget('advisor-chat', []).length > 0, coached: !!vget('coach', null), negotiated: !!vget('negotiate', null) }
   const inPlan = !LANDING.includes(route)
   const prog = progress(journeyState)
 
@@ -165,6 +160,7 @@ export default function App() {
           <nav className="steps" aria-label={t('Site')}>
             {LANDING.includes(route) && <button onClick={() => go(answers.profile ? 'market' : 'profile')}>{answers.profile ? t('Continue my plan →') : t('Start')}</button>}
             <button className={`why-btn ${route === 'why' ? 'on' : ''}`} onClick={() => go('why')}>{t('Why TsunaGo')}</button>
+            <VentureMenu />
             <button className={`petal-btn ${petals ? '' : 'off'}`} onClick={togglePetals} aria-pressed={petals} title={petals ? t('Turn petals off') : t('Turn petals on')}>✿</button>
             <button className="checklist-btn" onClick={() => setChecklist(true)} aria-haspopup="dialog">
               ☑ <span className="cl-label">{t('Checklist')}</span> <b>{prog.done}/{prog.total}</b>

@@ -74,6 +74,14 @@ Japanese back-translation, what changed and how the original could be misread.
 **Negotiation prep** (AI): for a shortlisted partner and the terms on the table, their likely
 asks, a give-and-get concession ladder, red lines and phrases to use. Server: `app/server/culture.js`.
 
+## Saved ventures
+
+The header switcher (▤) keeps several India plans side by side: each venture has its own
+answers, shortlist, Advisor chat, compliance roadmap, negotiation prep and checklist. Duplicate a
+venture for a what-if copy, start over, delete, or export it as a `.tsunago.json` file to back it
+up or share it, and import it on any machine. Stored in this browser only (`app/src/lib/ventures.js`);
+data saved before ventures existed is moved into "My first venture".
+
 ## Advisor (AI market-entry advisor)
 
 **Advisor** is a chat with a senior India market-entry advisor. Its instructions are the team's

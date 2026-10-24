@@ -4,6 +4,7 @@ import { CATEGORIES, CHECKED_ON, MODE_COMPARE, MODES, PHASES, SAMPLE } from '../
 import { buildRoadmap, landedDuty, toCSV } from '../lib/compliance.js'
 import { STATE_NAMES } from '../lib/geo.js'
 import { budgetCap } from '../lib/engine.js'
+import { vget, vset } from '../lib/ventures.js'
 import { useI18n } from '../i18n.jsx'
 
 const STATUS = {
@@ -16,10 +17,6 @@ const SHORT = { official: 'Official', secondary: 'Secondary', conflict: 'Verify!
 const CAT_FROM_INDUSTRY = { auto: 'none', electronics: 'electronics', machinery: 'machinery', pharma: 'drug', food: 'food' }
 const TABS = [['roadmap', 'Roadmap'], ['timeline', 'Timeline'], ['modes', 'Entry modes'], ['duty', 'Duty calculator'], ['changes', 'Rule changes']]
 
-const store = {
-  get(k, f) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : f } catch { return f } },
-  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)) } catch { /* storage unavailable: keep in memory */ } },
-}
 
 function fromAnswers(a) {
   return {
@@ -44,15 +41,15 @@ const MODE_FOR_TYPE = { Distributor: 'export', Integrator: 'export', 'Service co
 
 export default function Compliance({ answers, result, shortlist = [], go }) {
   const { t, lang } = useI18n()
-  const [input, setInput] = useState(() => store.get('tsunago-compliance', fromAnswers(answers)))
-  const [cur, setCur] = useState(() => store.get('tsunago-compliance-cur', { ccy: 'INR', rate: 0.57 }))
+  const [input, setInput] = useState(() => vget('compliance', fromAnswers(answers)))
+  const [cur, setCur] = useState(() => vget('compliance-cur', { ccy: 'INR', rate: 0.57 }))
   const [tab, setTab] = useState('roadmap')
   const [openRow, setOpenRow] = useState(null)
-  const [signoff, setSignoff] = useState(() => store.get('tsunago-compliance-signoff', { name: '', firm: '', done: false, date: '' }))
+  const [signoff, setSignoff] = useState(() => vget('compliance-signoff', { name: '', firm: '', done: false, date: '' }))
   const [duty, setDuty] = useState({ value: 1000000, bcd: 7.5, cepa: 0, useCepa: false, igst: 18 })
-  useEffect(() => store.set('tsunago-compliance', input), [input])
-  useEffect(() => store.set('tsunago-compliance-cur', cur), [cur])
-  useEffect(() => store.set('tsunago-compliance-signoff', signoff), [signoff])
+  useEffect(() => vset('compliance', input), [input])
+  useEffect(() => vset('compliance-cur', cur), [cur])
+  useEffect(() => vset('compliance-signoff', signoff), [signoff])
 
   const set = (patch) => setInput((i) => ({ ...i, ...patch }))
   // Partners from stage 2: the shortlist first, otherwise the eligible ones.
