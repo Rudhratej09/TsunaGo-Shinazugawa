@@ -90,6 +90,8 @@ export default function Intro({ onReveal, onDone }) {
         vf: 0.008 + Math.random() * 0.02,
         sprite: sprites[(Math.random() * sprites.length) | 0],
         alpha: 0.75 + Math.random() * 0.25,
+        ox: 0, // pointer push, decays back toward the stream
+        oy: 0,
       }
     })
 
@@ -108,6 +110,14 @@ export default function Intro({ onReveal, onDone }) {
     }
 
     let raf
+    const ptr = { x: -1e4, y: -1e4, vx: 0, vy: 0 }
+    const onMove = (e) => {
+      ptr.vx = e.clientX - ptr.x
+      ptr.vy = e.clientY - ptr.y
+      ptr.x = e.clientX
+      ptr.y = e.clientY
+    }
+    window.addEventListener('pointermove', onMove, { passive: true })
     const t0 = performance.now()
     const frame = (now) => {
       const t = now - t0
@@ -148,8 +158,21 @@ export default function Intro({ onReveal, onDone }) {
         const width = H * (0.22 + 0.3 * Math.min(1, d / W))
         const wob = Math.sin(d / 90 + p.phase) * 18
         const off = p.lane * width + wob
-        const x = cx + (nx / nl) * off
-        const y = cy + (ny / nl) * off
+        // The stream parts around the pointer.
+        const bx = cx + (nx / nl) * off + p.ox
+        const by = cy + (ny / nl) * off + p.oy
+        const dx = bx - ptr.x
+        const dy = by - ptr.y
+        const dist = Math.hypot(dx, dy) || 1
+        if (dist < 130) {
+          const f = (1 - dist / 130) ** 2
+          p.ox += (dx / dist) * f * 9 + Math.max(-40, Math.min(40, ptr.vx)) * f * 0.3
+          p.oy += (dy / dist) * f * 9 + Math.max(-40, Math.min(40, ptr.vy)) * f * 0.3
+        }
+        p.ox *= 0.97
+        p.oy *= 0.97
+        const x = bx
+        const y = by
         p.rot += p.vr * 16
         p.flip += p.vf * 16
         ctx.save()
@@ -161,11 +184,16 @@ export default function Intro({ onReveal, onDone }) {
         ctx.restore()
       }
 
+      ptr.vx *= 0.8
+      ptr.vy *= 0.8
       if (t >= T.end) return finish()
       raf = requestAnimationFrame(frame)
     }
     raf = requestAnimationFrame(frame)
-    return () => cancelAnimationFrame(raf)
+    return () => {
+      cancelAnimationFrame(raf)
+      window.removeEventListener('pointermove', onMove)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready])
 

@@ -80,6 +80,7 @@ export default function IndiaMap({ presence = {}, hq, clusters = [], highlightCl
             <motion.path key={p.key} d={PETAL} fill={p.fill} stroke="#d76f8c" strokeWidth={0.25}
               initial={{ x: p.x - 14, y: p.y - 70, rotate: p.rot - 140, opacity: 0, scale: p.s }}
               animate={{ x: p.x, y: p.y, rotate: p.rot, opacity: 0.95, scale: p.s }}
+              whileHover={{ scale: p.s * 1.7, rotate: p.rot + 70, y: p.y - 6, transition: { type: 'spring', stiffness: 300, damping: 12 } }}
               transition={{ duration: 1.5, delay: p.delay, ease: [0.22, 1, 0.36, 1] }} />
           ))}
         </g>

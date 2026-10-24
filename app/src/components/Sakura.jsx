@@ -41,21 +41,75 @@ export default function Sakura({ density = 26 }) {
       vf: 0.01 + Math.random() * 0.025,
       sway: Math.random() * Math.PI * 2,
       tone: Math.random(),
+      ex: 0, // extra velocity from the pointer, decays each frame
+      ey: 0,
+      spin: 0,
     })
     const petals = Array.from({ length: density }, () => make(true))
+
+    // The canvas ignores pointer events so the page stays clickable; track the pointer on window instead.
+    const ptr = { x: 0, y: 0, vx: 0, vy: 0, active: false }
+    const onMove = (e) => {
+      const x = e.clientX * dpr
+      const y = e.clientY * dpr
+      if (ptr.active) {
+        ptr.vx = x - ptr.x
+        ptr.vy = y - ptr.y
+      }
+      ptr.x = x
+      ptr.y = y
+      ptr.active = true
+    }
+    const onLeave = () => { ptr.active = false }
+    // A click sends nearby petals flying.
+    const onDown = (e) => {
+      const x = e.clientX * dpr
+      const y = e.clientY * dpr
+      const R = 240 * dpr
+      for (const p of petals) {
+        const dx = p.x - x
+        const dy = p.y - y
+        const d = Math.hypot(dx, dy) || 1
+        if (d > R) continue
+        const f = (1 - d / R) * 14 * dpr
+        p.ex += (dx / d) * f
+        p.ey += (dy / d) * f - 2 * dpr
+        p.spin += (Math.random() - 0.5) * 0.4
+      }
+    }
+    window.addEventListener('pointermove', onMove, { passive: true })
+    window.addEventListener('pointerdown', onDown, { passive: true })
+    document.addEventListener('pointerleave', onLeave)
+    window.addEventListener('blur', onLeave)
 
     let t = 0
     const tick = () => {
       t += 1
       ctx.clearRect(0, 0, w, h)
       const wind = Math.sin(t / 400) * 0.4 * dpr
+      const R = 150 * dpr
       for (const p of petals) {
+        // Near the pointer, petals are pushed away and dragged along with its movement.
+        if (ptr.active) {
+          const dx = p.x - ptr.x
+          const dy = p.y - ptr.y
+          const d = Math.hypot(dx, dy) || 1
+          if (d < R) {
+            const f = (1 - d / R) ** 2
+            p.ex += (dx / d) * f * 1.6 * dpr + ptr.vx * f * 0.12
+            p.ey += (dy / d) * f * 1.6 * dpr + ptr.vy * f * 0.12
+            p.spin += f * 0.03 * Math.sign(dx * ptr.vy - dy * ptr.vx || 1)
+          }
+        }
         p.sway += 0.012
-        p.x += p.vx + wind + Math.sin(p.sway) * 0.4 * dpr
-        p.y += p.vy
-        p.rot += p.vr
-        p.flip += p.vf
-        if (p.y > h + 30 || p.x > w + 30) Object.assign(p, make(false), { x: Math.random() * w * 0.9 - w * 0.1 })
+        p.x += p.vx + wind + Math.sin(p.sway) * 0.4 * dpr + p.ex
+        p.y += p.vy + p.ey
+        p.ex *= 0.94
+        p.ey *= 0.94
+        p.rot += p.vr + p.spin
+        p.spin *= 0.95
+        p.flip += p.vf + Math.min(0.2, Math.hypot(p.ex, p.ey) * 0.01)
+        if (p.y > h + 30 || p.x > w + 30 || p.x < -60 * dpr || p.y < -200 * dpr) Object.assign(p, make(false), { x: Math.random() * w * 0.9 - w * 0.1 })
         ctx.save()
         ctx.translate(p.x, p.y)
         ctx.rotate(p.rot)
@@ -69,6 +123,8 @@ export default function Sakura({ density = 26 }) {
         ctx.fill()
         ctx.restore()
       }
+      ptr.vx *= 0.8
+      ptr.vy *= 0.8
       raf = requestAnimationFrame(tick)
     }
     const onVis = () => {
@@ -81,6 +137,10 @@ export default function Sakura({ density = 26 }) {
       cancelAnimationFrame(raf)
       window.removeEventListener('resize', resize)
       document.removeEventListener('visibilitychange', onVis)
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerdown', onDown)
+      document.removeEventListener('pointerleave', onLeave)
+      window.removeEventListener('blur', onLeave)
     }
   }, [density])
 
