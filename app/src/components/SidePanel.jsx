@@ -212,7 +212,7 @@ function PartnerView({ p, answers, result, onClose, starred, onStar }) {
               </div>
             ))}
             <h3 className="h3" style={{ marginTop: 24 }}>To verify before the pilot</h3>
-            <ul style={{ fontSize: 13.5, paddingLeft: 18 }}>{ai.verify.map((v) => <li key={v}>{v}</li>)}</ul>
+            <ul style={{ fontSize: 15.5, paddingLeft: 18 }}>{ai.verify.map((v) => <li key={v}>{v}</li>)}</ul>
           </motion.div>
         )}
       </div>

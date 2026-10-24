@@ -32,7 +32,7 @@ export default function Sakura({ density = 26 }) {
     const make = (initial) => ({
       x: Math.random() * w,
       y: initial ? Math.random() * h : -20 * dpr,
-      s: (8 + Math.random() * 9) * dpr,
+      s: (16 + Math.random() * 18) * dpr,
       vy: (0.35 + Math.random() * 0.55) * dpr,
       vx: (0.15 + Math.random() * 0.35) * dpr,
       rot: Math.random() * Math.PI * 2,

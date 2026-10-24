@@ -27,7 +27,7 @@ export default function Options({ answers, set, result, open, selected, shortlis
           <p className="muted" style={{ margin: 0 }}>{industryLabel(answers.industry)} · {MODEL_COPY[model].route}. Click any region or partner for full analytics.</p>
         </div>
         <div>
-          <div className="small muted" style={{ marginBottom: 6, letterSpacing: '.12em', textTransform: 'uppercase', fontSize: 11 }}>What if… service model</div>
+          <div className="small muted" style={{ marginBottom: 6, letterSpacing: '.12em', textTransform: 'uppercase', fontSize: 13 }}>What if… service model</div>
           <div className="toggle">
             <button className={model === 'A' ? 'on' : ''} onClick={() => flipModel('A')}>A · Our team supports</button>
             <button className={model === 'B' ? 'on' : ''} onClick={() => flipModel('B')}>B · Need local installation</button>
@@ -66,7 +66,7 @@ export default function Options({ answers, set, result, open, selected, shortlis
             <div className="list-head" style={{ flexWrap: 'wrap' }}>
               <span className="h3">Partners</span>
               <div className="seg">
-                {FILTERS.map((f) => <button key={f} className={filter === f ? 'on' : ''} onClick={() => setFilter(f)} style={{ padding: '5px 10px', fontSize: 12 }}>{f}</button>)}
+                {FILTERS.map((f) => <button key={f} className={filter === f ? 'on' : ''} onClick={() => setFilter(f)} style={{ padding: '5px 10px', fontSize: 14 }}>{f}</button>)}
               </div>
             </div>
             <div className="section-label" style={{ display: 'flex', justifyContent: 'space-between' }}>

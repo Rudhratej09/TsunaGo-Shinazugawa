@@ -15,7 +15,7 @@ export function ScoreRing({ value, size = 140, label = 'Fit score', tone = '#111
         strokeDasharray={c} initial={{ strokeDashoffset: c }} animate={{ strokeDashoffset: c * (1 - value / 100) }}
         transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }} transform={`rotate(-90 ${size / 2} ${size / 2})`} strokeLinecap="butt" />
       <text x="50%" y="50%" textAnchor="middle" dominantBaseline="central" fontFamily="Cinzel, serif" fontSize={size * 0.3}>{value}</text>
-      <text x="50%" y={size / 2 + size * 0.22} textAnchor="middle" fontFamily="Inter, sans-serif" fontSize={9} letterSpacing="2" fill="#6e6e6e">{label.toUpperCase()}</text>
+      <text x="50%" y={size / 2 + size * 0.22} textAnchor="middle" fontFamily="Inter, sans-serif" fontSize={11} letterSpacing="2" fill="#6e6e6e">{label.toUpperCase()}</text>
     </svg>
   )
 }
@@ -40,7 +40,7 @@ export function Radar({ data, size = 220 }) {
         return (
           <g key={k}>
             <line x1={cx} y1={cy} x2={x} y2={y} stroke="#111" strokeOpacity={0.12} />
-            <text x={lx} y={ly} textAnchor={Math.abs(lx - cx) < 4 ? 'middle' : lx > cx ? 'start' : 'end'} dominantBaseline="central" fontSize={9.5} fontFamily="Inter, sans-serif" fill="#3a3a3a">{data[k].label}</text>
+            <text x={lx} y={ly} textAnchor={Math.abs(lx - cx) < 4 ? 'middle' : lx > cx ? 'start' : 'end'} dominantBaseline="central" fontSize={11.5} fontFamily="Inter, sans-serif" fill="#3a3a3a">{data[k].label}</text>
           </g>
         )
       })}
@@ -67,7 +67,7 @@ export function StackedBar({ parts }) {
             style={{ width: `${(p.value / total) * 100}%`, background: TONES[p.id], borderRight: '1px solid #111' }} />
         ))}
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px 18px', marginTop: 12, fontSize: 12.5 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px 18px', marginTop: 12, fontSize: 14.5 }}>
         {parts.map((p) => (
           <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
             <span><i style={{ display: 'inline-block', width: 10, height: 10, background: TONES[p.id], border: '1px solid #111', marginRight: 7, verticalAlign: -1 }} />{p.label}</span>

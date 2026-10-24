@@ -61,8 +61,8 @@ const COMPARE = [
 export default function Why({ go }) {
   return (
     <div className="page">
-      <div className="eyebrow">Why TsunaGo</div>
-      <h1 className="h1" style={{ fontSize: 'clamp(30px,4vw,48px)' }}>Built to answer the hard questions</h1>
+      <div className="eyebrow">For SMEs, JETRO and judges</div>
+      <h1 className="h1" style={{ fontSize: 'clamp(30px,4vw,48px)' }}>Why TsunaGo</h1>
       <p className="lede">A first-time entrant doesn't lack information. It lacks a way to connect it. TsunaGo turns scattered research into one decision, with reasons.</p>
 
       <div className="grid box usp" style={{ marginTop: 36 }}>

@@ -58,7 +58,7 @@ export function checkPartner(p, a) {
   if (model === 'B') {
     const ok = p.install && p.engineers >= 5
     checks.push({
-      id: 'install', label: 'Can install & service locally', short: 'cannot install locally', status: ok ? 'pass' : 'fail',
+      id: 'install', label: 'Can install & service locally', short: 'no local install', status: ok ? 'pass' : 'fail',
       detail: ok ? `${p.engineers} field engineers, ${p.responseHours}h response.` : p.install ? `Only ${p.engineers} engineers — too thin for installed equipment.` : 'Sales-only partner — fails the essential installation check.',
     })
   } else {

@@ -39,12 +39,12 @@ export default function IndiaMap({ presence = {}, hq, clusters = [], highlightCl
       if (!box) return
       const r = rng(state + (animateKey || ''))
       const area = Math.max(box[2] * box[3], 400)
-      const n = Math.round(Math.min(70, Math.max(10, area / 260)) * (0.45 + strength * 0.75))
+      const n = Math.round(Math.min(40, Math.max(6, area / 520)) * (0.45 + strength * 0.75))
       for (let i = 0; i < n; i++) {
         out.push({
           state, key: state + i,
           x: box[0] + r() * box[2], y: box[1] + r() * box[3],
-          rot: r() * 360, s: 0.7 + r() * 0.9, delay: 0.15 + r() * 0.9 + i * 0.004,
+          rot: r() * 360, s: 1.4 + r() * 1.8, delay: 0.15 + r() * 0.9 + i * 0.004,
           fill: r() > 0.45 ? '#f3b4c4' : '#f8d3dd',
         })
       }
@@ -93,7 +93,7 @@ export default function IndiaMap({ presence = {}, hq, clusters = [], highlightCl
             <circle cx={x} cy={y} r={hot ? 6 : 4} fill="#fff" stroke="#111" strokeWidth={hot ? 1.4 : 0.8} />
             {hot && <circle cx={x} cy={y} r={2} fill="#111" />}
             <text x={x + (LABEL[c.id]?.dx ?? 9)} y={y + (LABEL[c.id]?.dy ?? 4)} textAnchor={LABEL[c.id]?.anchor ?? 'start'}
-              fontSize={hot ? 14 : 11} fontWeight={hot ? 500 : 400} fontFamily="Inter, sans-serif" fill={hot ? '#111' : '#888'}
+              fontSize={hot ? 16 : 13} fontWeight={hot ? 500 : 400} fontFamily="Inter, sans-serif" fill={hot ? '#111' : '#888'}
               style={{ paintOrder: 'stroke', stroke: '#fff', strokeWidth: 3.5 }}>{c.name.split(' – ')[0]}</text>
           </g>
         )
@@ -105,7 +105,7 @@ export default function IndiaMap({ presence = {}, hq, clusters = [], highlightCl
             initial={{ scale: 0.4, opacity: 0.9 }} animate={{ scale: 1.6, opacity: 0 }}
             transition={{ duration: 2.2, repeat: Infinity, ease: 'easeOut' }} style={{ transformOrigin: `${hqXY[0]}px ${hqXY[1]}px` }} />
           <rect x={hqXY[0] - 4.5} y={hqXY[1] - 4.5} width={9} height={9} fill="#b8323f" transform={`rotate(45 ${hqXY[0]} ${hqXY[1]})`} />
-          <text x={hqXY[0]} y={hqXY[1] + 24} textAnchor="middle" fontSize={13} fontWeight={600} fill="#b8323f" fontFamily="Inter, sans-serif"
+          <text x={hqXY[0]} y={hqXY[1] + 24} textAnchor="middle" fontSize={15} fontWeight={600} fill="#b8323f" fontFamily="Inter, sans-serif"
             style={{ paintOrder: 'stroke', stroke: '#fff', strokeWidth: 3 }}>HQ · {hq.city}</text>
         </g>
       )}
