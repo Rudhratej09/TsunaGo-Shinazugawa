@@ -20,8 +20,8 @@ TsunaGo runs on open models through any OpenAI-compatible provider. The free def
 
 | Key | What for | Get it free |
 |---|---|---|
-| `GROQ_API_KEY` | The model (Llama 3.3 70B) for Partner Scout and brochure analysis | https://console.groq.com |
-| `TAVILY_API_KEY` | Web search for Partner Scout | https://tavily.com |
+| `GROQ_API_KEY` | The model (Llama 3.3 70B) for Partner Scout, the Advisor and brochure analysis | https://console.groq.com |
+| `TAVILY_API_KEY` | Web search for Partner Scout and the Advisor's cited facts | https://tavily.com |
 
 ```bash
 cp app/.env.example app/.env.local   # then paste the two keys
@@ -43,6 +43,21 @@ than two partners pass → draft a bilingual introduction.
 - Every quote, email and phone number is checked against the fetched page; anything not found is flagged.
 - Messages open as email or WhatsApp drafts. Nothing is sent automatically.
 - **Save run** downloads a recording; **Replay saved run** plays it back offline (use this as the stage backup).
+
+## Advisor (AI market-entry advisor)
+
+**Advisor** is a chat with a senior India market-entry advisor. Its instructions are the team's
+advisor prompt, kept verbatim in `app/server/advisorPrompt.js`; the `{{SME_PROFILE}}` slot is
+filled from the profile form on the tab (pre-filled from the guided flow's answers).
+
+- It works through go / no-go, localization, price waterfall, entry model and partner profile,
+  validation plan, and a decision brief. Claims are tagged [F] verified fact, [U] user input,
+  [E] estimate, [H] hypothesis, shown as coloured chips.
+- With `TAVILY_API_KEY` it searches the web for things that change (duties, rules, prices) and
+  cites sources with dates. Without it, it says so and tags such claims [E]/[H].
+- It does not name Indian companies; finding partners is Partner Scout's job.
+- Shortcuts: *give me the brief*, *show assumptions*, *what would change your answer?* Any reply
+  downloads as Markdown. The conversation stays in the browser (localStorage) only.
 
 ## Google sign-in (optional, recommended when deployed)
 
