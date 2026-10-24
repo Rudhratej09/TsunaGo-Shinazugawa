@@ -81,7 +81,7 @@ export default function Compliance({ answers }) {
 
   return (
     <div className="page compliance">
-      <div className="eyebrow">{t('Regulatory compliance')}</div>
+      <div className="eyebrow">{t('Stage 4 · Regulation & compliance')}</div>
       <h1 className="h2">{t('India compliance roadmap')}</h1>
       <p className="muted" style={{ maxWidth: 820 }}>{t('Answer a few questions and TsunaGo builds the steps your entry route needs: who files what, with which authority, in what order, how long it takes and what it costs. Every rule shows its source and how well it is verified.')}</p>
       <div className="disclaimer">{t('Decision support, not legal or tax advice. A chartered accountant or lawyer must review this roadmap before you act on it.')}</div>

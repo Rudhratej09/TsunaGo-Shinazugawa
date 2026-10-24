@@ -8,11 +8,11 @@ import { useI18n } from '../i18n.jsx'
 
 const FILTERS = ['All', 'Distributor', 'Integrator', 'JV candidate', 'Service contractor']
 
-export default function Options({ answers, set, result, open, selected, shortlist, toggleShortlist, go }) {
+export default function Options({ answers, set, result, open, selected, shortlist, toggleShortlist, go, view }) {
   const { t, lang } = useI18n()
   const [filter, setFilter] = useState('All')
   const [showOut, setShowOut] = useState(true)
-  const [view, setView] = useState('market')
+  const setView = (v) => go(v)
   const { model, clusters, partners } = result
   const eligible = partners.filter((p) => p.eligible)
   const list = partners.filter((p) => (filter === 'All' || p.type === filter) && (showOut || p.eligible))
@@ -26,8 +26,8 @@ export default function Options({ answers, set, result, open, selected, shortlis
     <div className="page">
       <div className="results-head">
         <div>
-          <div className="eyebrow">{t('Step 03 · Entry options')}</div>
-          <h1 className="h2">{t('Your entry options')} {lang === 'en' && <span className="jp" style={{ fontSize: '0.6em' }}>参入オプション</span>}</h1>
+          <div className="eyebrow">{view === 'market' ? t('Stage 1 · Understand the market') : t('Stage 2 · Find & verify partners')}</div>
+          <h1 className="h2">{view === 'market' ? t('India market & regions') : t('Your entry options')} {lang === 'en' && <span className="jp" style={{ fontSize: '0.6em' }}>{view === 'market' ? '市場と地域' : '参入オプション'}</span>}</h1>
           <p className="muted" style={{ margin: 0 }}>{t(industryLabel(answers.industry))} · {t(MODEL_COPY[model].route)}. {t('Click any region or partner for full analytics.')}</p>
         </div>
         <div>
@@ -44,7 +44,7 @@ export default function Options({ answers, set, result, open, selected, shortlis
         <button role="tab" aria-selected={view === 'partners'} className={view === 'partners' ? 'on' : ''} onClick={() => setView('partners')}>2 · {t('Partner options')}</button>
       </div>
 
-      {view === 'market' ? <Market answers={answers} model={model} onContinue={() => { setView('partners'); window.scrollTo({ top: 0, behavior: 'smooth' }) }} /> : <>
+      {view === 'market' ? <Market answers={answers} model={model} onContinue={() => go('partners')} /> : <>
       <div className="grid box summary-strip">
         <div className="cell stat"><span>{t('Top region')}</span><b>{t(clusters[0].name).split(/ – |・/)[0]}</b></div>
         <div className="cell stat"><span>{t('Partners passing checks')}</span><b>{eligible.length} / {partners.length}</b></div>
