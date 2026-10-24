@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import { handleExtract } from './server/extract.js'
 import { handleScout } from './server/scout.js'
 import { handleAuth } from './server/auth.js'
+import { handleCulture } from './server/culture.js'
 import { handleAdvisor } from './server/advisor.js'
 
 // Serves the /api routes from the dev and preview servers, keeping API keys server-side.
@@ -14,6 +15,7 @@ function apiRoutes(env) {
     server.middlewares.use('/api/scout', (req, res) => handleScout(req, res, env))
     server.middlewares.use('/api/auth', (req, res) => handleAuth(req, res, env))
     server.middlewares.use('/api/advisor', (req, res) => handleAdvisor(req, res, env))
+    server.middlewares.use('/api/culture', (req, res) => handleCulture(req, res, env))
   }
   return { name: 'tsunago-api', configureServer: mount, configurePreviewServer: mount }
 }

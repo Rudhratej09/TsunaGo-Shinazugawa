@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { CATEGORIES, CHECKED_ON, MODE_COMPARE, MODES, PHASES, SAMPLE } from '../data/compliance.js'
 import { buildRoadmap, landedDuty, toCSV } from '../lib/compliance.js'
 import { STATE_NAMES } from '../lib/geo.js'
+import { budgetCap } from '../lib/engine.js'
 import { useI18n } from '../i18n.jsx'
 
 const STATUS = {
@@ -23,7 +24,7 @@ const store = {
 function fromAnswers(a) {
   return {
     company: '', industry: a.industry, category: CAT_FROM_INDUSTRY[a.industry] || 'none',
-    mode: a.presence === 'none' && a.budget === 'limited' ? 'export' : 'sub',
+    mode: a.presence === 'none' && budgetCap(a) <= 40 ? 'export' : 'sub',
     state: 'mh', landBorder: false, headcount: a.presence === 'none' ? 0 : 5, expats: 0, personalData: false, revenueCr: 2,
   }
 }
@@ -38,7 +39,10 @@ function Seg({ value, options, onChange, lang }) {
 }
 const YESNO = [{ id: true, label: 'Yes' }, { id: false, label: 'No' }]
 
-export default function Compliance({ answers }) {
+// Which entry mode usually fits a partner type.
+const MODE_FOR_TYPE = { Distributor: 'export', Integrator: 'export', 'Service contractor': 'export', 'JV candidate': 'jv' }
+
+export default function Compliance({ answers, result, shortlist = [], go }) {
   const { t, lang } = useI18n()
   const [input, setInput] = useState(() => store.get('tsunago-compliance', fromAnswers(answers)))
   const [cur, setCur] = useState(() => store.get('tsunago-compliance-cur', { ccy: 'INR', rate: 0.57 }))
@@ -51,6 +55,15 @@ export default function Compliance({ answers }) {
   useEffect(() => store.set('tsunago-compliance-signoff', signoff), [signoff])
 
   const set = (patch) => setInput((i) => ({ ...i, ...patch }))
+  // Partners from stage 2: the shortlist first, otherwise the eligible ones.
+  const candidates = result ? (shortlist.length ? result.partners.filter((p) => shortlist.includes(p.id)) : result.partners.filter((p) => p.eligible).slice(0, 5)) : []
+  const partner = result?.partners.find((p) => p.id === input.partnerId)
+  const choosePartner = (id) => {
+    const p = result.partners.find((x) => x.id === id)
+    if (!p) return set({ partnerId: null, partnerName: null })
+    set({ partnerId: p.id, partnerName: p.name, ...(STATE_NAMES[p.hq.state] ? { state: p.hq.state } : {}) })
+  }
+  const suggestedMode = partner && MODE_FOR_TYPE[partner.type]
   const r = useMemo(() => buildRoadmap(input), [input])
   const L = (x) => (x && typeof x === 'object' ? x[lang] : x)
 
@@ -84,7 +97,7 @@ export default function Compliance({ answers }) {
       <div className="eyebrow">{t('Stage 4 · Regulation & compliance')}</div>
       <h1 className="h2">{t('India compliance roadmap')}</h1>
       <p className="muted" style={{ maxWidth: 820 }}>{t('Answer a few questions and TsunaGo builds the steps your entry route needs: who files what, with which authority, in what order, how long it takes and what it costs. Every rule shows its source and how well it is verified.')}</p>
-      <div className="disclaimer">{t('Decision support, not legal or tax advice. A chartered accountant or lawyer must review this roadmap before you act on it.')}</div>
+      <div className="disclaimer">{t('Decision support, not legal or tax advice. Have a chartered accountant or lawyer check it before you act on it.')}</div>
 
       <div className="box" style={{ marginTop: 22 }}>
         <div className="list-head">
@@ -95,6 +108,25 @@ export default function Compliance({ answers }) {
           </span>
         </div>
         <div className="grid form" style={{ marginTop: 0 }}>
+          <div className="field" style={{ gridColumn: '1 / -1', borderRight: 0 }}><label>{t('Your Indian partner (from stage 2)')}</label>
+            {candidates.length ? (
+              <div className="partner-pick">
+                <select className="input" value={input.partnerId || ''} onChange={(e) => choosePartner(e.target.value)}>
+                  <option value="">{t('No partner yet')}</option>
+                  {candidates.map((p) => <option key={p.id} value={p.id}>{p.name} · {t(p.type)} · {p.hq.city}</option>)}
+                </select>
+                {partner && (
+                  <span className="small">
+                    {suggestedMode && suggestedMode !== input.mode
+                      ? <>{t('Usual entry mode with this kind of partner:')} <b style={{ fontWeight: 500 }}>{modeLabel(suggestedMode)}</b> <button className="link small" onClick={() => set({ mode: suggestedMode })}>{t('Use it')}</button></>
+                      : <span className="muted">{(input.mode === 'export' || input.mode === 'lo') ? t('{n} acts as importer: IEC, GST and customs steps are theirs.', { n: partner.name }) : t('Main state set to the partner\'s home state.')}</span>}
+                  </span>
+                )}
+              </div>
+            ) : (
+              <span className="small muted">{t('Shortlist a partner in stage 2 and it will appear here.')} {go && <button className="link small" onClick={() => go('partners')}>{t('Go to partners →')}</button>}</span>
+            )}
+          </div>
           <div className="field" style={{ gridColumn: '1 / -1', borderRight: 0 }}><label>{t('Entry mode')}</label><Seg value={input.mode} options={MODES} onChange={(v) => set({ mode: v })} lang={lang} /></div>
           <div className="field" style={{ gridColumn: '1 / -1', borderRight: 0 }}><label>{t('Product category')}</label><Seg value={input.category} options={CATEGORIES} onChange={(v) => set({ category: v })} lang={lang} /></div>
           <div className="field"><label>{t('Any Chinese, Hong Kong or other land-border-country owners?')}</label><Seg value={input.landBorder} options={YESNO} onChange={(v) => set({ landBorder: v })} /></div>
@@ -269,11 +301,11 @@ export default function Compliance({ answers }) {
 
       <div className="box signoff">
         <div className="list-head"><span className="h3">{t('Professional sign-off')}</span>
-          <span className={`vs ${signoff.done ? 'vs-official' : 'vs-conflict'}`}>{signoff.done ? t('Reviewed by {n} on {d}', { n: signoff.name, d: signoff.date }) : t('Not yet reviewed')}</span></div>
+          <span className={`vs ${signoff.done ? 'vs-official' : 'vs-conflict'}`}>{signoff.done ? t('Reviewed by {n} on {d}', { n: signoff.firm ? `${signoff.name}, ${signoff.firm}` : signoff.name, d: signoff.date }) : t('Not yet reviewed')}</span></div>
         <div className="cell" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
           <input className="input" style={{ maxWidth: 220 }} placeholder={t('Reviewer name')} value={signoff.name} onChange={(e) => setSignoff({ ...signoff, name: e.target.value, done: false })} />
-          <input className="input" style={{ maxWidth: 260 }} placeholder={t('CA / law firm')} value={signoff.firm} onChange={(e) => setSignoff({ ...signoff, firm: e.target.value, done: false })} />
-          <button className="btn" disabled={!signoff.name.trim() || !signoff.firm.trim()} onClick={() => setSignoff({ ...signoff, done: true, date: new Date().toISOString().slice(0, 10) })}>{t('Record review')}</button>
+          <input className="input" style={{ maxWidth: 260 }} placeholder={t('Firm (optional)')} value={signoff.firm} onChange={(e) => setSignoff({ ...signoff, firm: e.target.value, done: false })} />
+          <button className="btn" disabled={!signoff.name.trim()} onClick={() => setSignoff({ ...signoff, done: true, date: new Date().toISOString().slice(0, 10) })}>{t('Record review')}</button>
           <span style={{ flex: 1 }} />
           <button className="btn ghost" onClick={download}>{t('Download CSV')}</button>
           <button className="btn ghost" onClick={() => window.print()}>{t('Print / PDF')}</button>

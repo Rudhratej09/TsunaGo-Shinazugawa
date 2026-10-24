@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
-import { BUDGETS, INDUSTRIES, PRESENCE, TIMINGS } from '../data/catalog.js'
+import { INDUSTRIES, PRESENCE, TIMINGS } from '../data/catalog.js'
+import { budgetLabel } from '../lib/engine.js'
 import { scoutStatus } from '../lib/scout.js'
 import { useI18n } from '../i18n.jsx'
 import { GoogleButton, useAuth } from '../auth.jsx'
@@ -52,8 +53,8 @@ function profileFromAnswers(a) {
   return {
     homeCountry: 'Japan',
     products: a.product || '',
-    buyerType: `${label(INDUSTRIES, a.industry)} manufacturers (B2B)`,
-    investment: label(BUDGETS, a.budget),
+    buyerType: a.customIndustry?.trim() ? `${a.customIndustry.trim()} (B2B)` : `${label(INDUSTRIES, a.industry)} manufacturers (B2B)`,
+    investment: budgetLabel(a),
     contacts: label(PRESENCE, a.presence),
     timeline: label(TIMINGS, a.timing),
     notes: `Needs local installation: ${a.localInstall ? 'yes' : 'no'}. Own service team for India: ${a.ownService ? 'yes' : 'no'}.`,

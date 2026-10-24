@@ -31,7 +31,7 @@ const LABEL = {
   neemrana: { dx: -9, dy: 6, anchor: 'end' }, ahmedabad: { dx: -9, dy: 4, anchor: 'end' },
 }
 
-export default function IndiaMap({ presence = {}, hq, clusters = [], highlightClusters = [], height = 420, animateKey, markers = [] }) {
+export default function IndiaMap({ presence = {}, hq, clusters = [], highlightClusters = [], height = 420, animateKey, markers = [], onStateClick, selected }) {
   const petals = useMemo(() => {
     const out = []
     Object.entries(presence).forEach(([state, strength]) => {
@@ -56,6 +56,7 @@ export default function IndiaMap({ presence = {}, hq, clusters = [], highlightCl
 
   return (
     <svg viewBox="-70 -10 700 716" preserveAspectRatio="xMidYMid meet" style={{ width: '100%', height, display: 'block' }} role="img"
+      className={onStateClick ? 'india-map interactive' : 'india-map'}
       aria-label={`Map of India highlighting ${Object.keys(presence).map((s) => STATE_NAMES[s]).join(', ') || 'no states'}`}>
       <defs>
         {Object.keys(presence).map((id) => {
@@ -67,8 +68,9 @@ export default function IndiaMap({ presence = {}, hq, clusters = [], highlightCl
       {india.locations.map((l) => {
         const on = presence[l.id] != null
         return (
-          <path key={l.id} d={l.path} fill={on ? '#fdf0f4' : '#fff'} stroke="#111" strokeWidth={on ? 0.9 : 0.45}
-            strokeLinejoin="round">
+          <path key={l.id} d={l.path} fill={on ? '#fdf0f4' : '#fff'} stroke="#111" strokeWidth={selected === l.id ? 2 : on ? 0.9 : 0.45}
+            strokeLinejoin="round" className={`state ${selected === l.id ? 'sel' : ''}`}
+            onClick={onStateClick ? () => onStateClick(l.id) : undefined}>
             <title>{STATE_NAMES[l.id]}{on ? ` · presence ${Math.round(presence[l.id] * 100)}%` : ''}</title>
           </path>
         )
@@ -84,6 +86,10 @@ export default function IndiaMap({ presence = {}, hq, clusters = [], highlightCl
               transition={{ duration: 1.5, delay: p.delay, ease: [0.22, 1, 0.36, 1] }} />
           ))}
         </g>
+      ))}
+
+      {selected && india.locations.filter((l) => l.id === selected).map((l) => (
+        <path key="sel" d={l.path} fill="none" stroke="#d76f8c" strokeWidth={2.4} strokeLinejoin="round" pointerEvents="none" />
       ))}
 
       {clusters.map((c) => {

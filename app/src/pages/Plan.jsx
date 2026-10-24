@@ -21,7 +21,7 @@ export default function Plan({ answers, result, shortlist, open, go }) {
           <div className="eyebrow">{t('Stage 6 · Pilot & long-term operations')}</div>
           <h1 className="h2">{t('Plan the first pilot')} {lang === 'en' && <span className="jp" style={{ fontSize: '0.6em' }}>パイロット計画</span>}</h1>
           <p className="muted" style={{ margin: 0 }}>
-            {t(industryLabel(answers.industry))} · {t('model')} {plan.model} ({t(MODEL_COPY[plan.model].route)}) · {t(plan.region.name)} · {t('{n} weeks', { n: plan.weeks })}
+            {(answers.customIndustry?.trim() ? `${answers.customIndustry.trim()} (${t('data')}: ${t(industryLabel(answers.industry))})` : t(industryLabel(answers.industry)))} · {t('model')} {plan.model} ({t(MODEL_COPY[plan.model].route)}) · {t(plan.region.name)} · {t('{n} weeks', { n: plan.weeks })}
           </p>
         </div>
         <button className="btn ghost no-print" onClick={() => window.print()}>{t('Export brief (PDF)')}</button>
