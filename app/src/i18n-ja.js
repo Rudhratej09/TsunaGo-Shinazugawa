@@ -762,4 +762,12 @@ export const JA = {
   'India market & regions': 'インド市場と地域',
   'AI Advisor: localization, pricing & entry model': 'AIアドバイザー：現地化・価格・参入モデル',
   'Stage 3 · Localize product & pricing': 'ステージ3 · 製品・価格の現地化',
+  'Market': '市場',
+  'Localize & price': '現地化・価格',
+  'Culture': '商習慣',
+  'Pilot & operations': 'パイロット・運営',
+  'Compare & shortlist': '比較・候補選定',
+  '✦ Partner Scout': '✦ パートナースカウト',
+  'Checklist': 'チェックリスト',
+  'Close': '閉じる',
 }
