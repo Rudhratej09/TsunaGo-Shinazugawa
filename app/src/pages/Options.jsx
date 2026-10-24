@@ -12,7 +12,6 @@ export default function Options({ answers, set, result, open, selected, shortlis
   const { t, lang } = useI18n()
   const [filter, setFilter] = useState('All')
   const [showOut, setShowOut] = useState(true)
-  const setView = (v) => go(v)
   const { model, clusters, partners } = result
   const eligible = partners.filter((p) => p.eligible)
   const list = partners.filter((p) => (filter === 'All' || p.type === filter) && (showOut || p.eligible))
@@ -39,10 +38,6 @@ export default function Options({ answers, set, result, open, selected, shortlis
         </div>
       </div>
 
-      <div className="seg view-tabs" role="tablist">
-        <button role="tab" aria-selected={view === 'market'} className={view === 'market' ? 'on' : ''} onClick={() => setView('market')}>1 · {t('Market & regions')}</button>
-        <button role="tab" aria-selected={view === 'partners'} className={view === 'partners' ? 'on' : ''} onClick={() => setView('partners')}>2 · {t('Partner options')}</button>
-      </div>
 
       {view === 'market' ? <Market answers={answers} model={model} onContinue={() => go('partners')} /> : <>
       <div className="grid box summary-strip">
@@ -113,7 +108,7 @@ export default function Options({ answers, set, result, open, selected, shortlis
       <div style={{ marginTop: 28, display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
         <button className="btn ghost" onClick={() => go('needs')}>{t('← Requirements')}</button>
         <span className="small muted" style={{ maxWidth: 460 }}>{view === 'partners' && t(DATASET_NOTE)}</span>
-        <button className="btn" onClick={() => go('plan')}>{t('Plan the first pilot →')}</button>
+        {view === 'partners' && <button className="btn" onClick={() => go('plan')}>{t('Plan the first pilot →')}</button>}
       </div>
     </div>
   )

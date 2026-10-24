@@ -4,7 +4,7 @@ import Sakura from './components/Sakura.jsx'
 import Intro from './components/Intro.jsx'
 import { BRAND } from './brand.js'
 import SidePanel from './components/SidePanel.jsx'
-import Journey from './components/Journey.jsx'
+import { ChecklistDrawer, progress, StageTabs } from './components/Journey.jsx'
 import Home from './pages/Home.jsx'
 import { NeedsStep, ProfileStep } from './pages/Setup.jsx'
 import Options from './pages/Options.jsx'
@@ -64,6 +64,8 @@ export default function App() {
   const [panel, setPanel] = useState(null)
   const [shortlist, setShortlist] = useState(() => readStore('tsunago-shortlist', []))
   const [customPartners, setCustomPartners] = useState([])
+  const [checklist, setChecklist] = useState(false)
+  const closeChecklist = useCallback(() => setChecklist(false), [])
   // Keep the plan across reloads (answers and shortlist live only in this browser).
   useEffect(() => {
     try {
@@ -139,7 +141,8 @@ export default function App() {
   const open = (kind, data) => setPanel({ kind, id: data.id })
   const toggleShortlist = (id) => setShortlist((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]))
   const journeyState = { answers, visited, shortlist, signedOff: !!readStore('tsunago-compliance-signoff', {}).done, advisorStarted: readStore('tsunago-advisor-chat', []).length > 0 }
-  const withSidebar = !LANDING.includes(route)
+  const inPlan = !LANDING.includes(route)
+  const prog = progress(journeyState)
 
   const props = { answers, set, go, result, open, selected: panel?.id, shortlist, toggleShortlist }
 
@@ -151,7 +154,10 @@ export default function App() {
           <button className="brand" onClick={() => go('home')} aria-label={`${BRAND.name} home`}><img src={BRAND.logo} alt={BRAND.name} /></button>
           <nav className="steps" aria-label={t('Site')}>
             {LANDING.includes(route) && <button onClick={() => go(answers.profile ? 'market' : 'profile')}>{answers.profile ? t('Continue my plan →') : t('Start')}</button>}
-            <button className={route === 'why' ? 'on' : ''} onClick={() => go('why')}>{t('Why TsunaGo')}</button>
+            <button className={`why-btn ${route === 'why' ? 'on' : ''}`} onClick={() => go('why')}>{t('Why TsunaGo')}</button>
+            <button className="checklist-btn" onClick={() => setChecklist(true)} aria-haspopup="dialog">
+              ☑ <span className="cl-label">{t('Checklist')}</span> <b>{prog.done}/{prog.total}</b>
+            </button>
             <span className="lang-switch" role="group" aria-label="Language">
               <button className={lang === 'en' ? 'on' : ''} onClick={() => setLang('en')}>EN</button>
               <button className={lang === 'ja' ? 'on' : ''} onClick={() => setLang('ja')}>日本語</button>
@@ -164,8 +170,7 @@ export default function App() {
           )}
         </header>
 
-        <div className={withSidebar ? 'shell' : ''}>
-        {withSidebar && <Journey route={route} go={go} state={journeyState} />}
+        {inPlan && <StageTabs route={route} go={go} state={journeyState} />}
         <AnimatePresence mode="wait">
           <motion.main key={route} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.35 }} style={{ flex: 1, minWidth: 0 }}>
             {route === 'home' && <Home go={go} intro={intro} />}
@@ -186,7 +191,6 @@ export default function App() {
             {route === 'plan' && (answers.profile ? <Plan {...props} /> : <ProfileStep answers={answers} pick={pick} go={go} />)}
           </motion.main>
         </AnimatePresence>
-        </div>
 
         <footer className="foot">
           <span>{t('TEAM SHINAZUGAWA · Thapar × JETRO Hackathon')}</span>
@@ -197,6 +201,7 @@ export default function App() {
       {intro !== 'done' && (
         <Intro onReveal={() => setIntro((s) => (s === 'playing' ? 'revealing' : s))} onDone={() => setIntro('done')} />
       )}
+      <ChecklistDrawer open={checklist} onClose={closeChecklist} route={route} go={go} state={journeyState} />
       <SidePanel item={livePanel} answers={answers} result={result} onClose={() => setPanel(null)} shortlist={shortlist} toggleShortlist={toggleShortlist} />
     </LangProvider>
   )
