@@ -1,20 +1,23 @@
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import { handleExtract } from './server/extract.js'
+import { handleScout } from './server/scout.js'
 
-// Serves POST /api/extract from the dev and preview servers, keeping the API key server-side.
-function extractApi(apiKey) {
+// Serves the /api routes from the dev and preview servers, keeping API keys server-side.
+// On Vercel the same handlers run as functions from app/api/.
+function apiRoutes(env) {
   // Block body on purpose: a returned function would be treated as a post-middleware hook.
   const mount = (server) => {
-    server.middlewares.use('/api/extract', (req, res) => handleExtract(req, res, apiKey))
+    server.middlewares.use('/api/extract', (req, res) => handleExtract(req, res, env))
+    server.middlewares.use('/api/scout', (req, res) => handleScout(req, res, env))
   }
-  return { name: 'tsunago-extract-api', configureServer: mount, configurePreviewServer: mount }
+  return { name: 'tsunago-api', configureServer: mount, configurePreviewServer: mount }
 }
 
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), '')
+  const env = { ...process.env, ...loadEnv(mode, process.cwd(), '') }
   return {
-    plugins: [react(), extractApi(env.ANTHROPIC_API_KEY)],
+    plugins: [react(), apiRoutes(env)],
     build: { chunkSizeWarningLimit: 900 },
   }
 })

@@ -23,8 +23,14 @@ const QA = [
   {
     q: 'Where exactly is the AI?',
     a: [
-      'Live, in the Analyze page: paste any partner brochure and Claude extracts a structured profile, copying the exact sentence behind every fact. TsunaGo then checks each quote against the source text and flags any it cannot find, so the AI cannot quietly invent a capability.',
+      "In Partner Scout, an AI agent turns the SME's goal into a search plan, reads Indian companies' own websites, extracts a profile with the exact sentence behind every fact, searches again if the matches are weak, and drafts a bilingual introduction. TsunaGo checks every quote and contact detail against the page and flags anything it cannot find, so the AI cannot quietly invent a capability. It runs on open models (Llama via Groq by default), and the provider is a setting.",
       'Ranking itself is transparent rules and math: essential checks, then weighted scores the SME controls. Open the Evidence tab on any partner to see quote → fact → check.',
+    ],
+  },
+  {
+    q: 'Do you scrape IndiaMART or buy contact lists?',
+    a: [
+      "No. The agent skips directories and marketplaces by policy, reads only companies' own public websites, uses only the business contacts they publish, and never sends anything automatically: the SME reviews every message and sends it.",
     ],
   },
   {
@@ -105,7 +111,7 @@ export default function Why({ go }) {
               <td><a href={JP_PRESENCE.url} target="_blank" rel="noreferrer">{JP_PRESENCE.source}</a></td>
               <td>{t('Sourced. Drives the Japan-ecosystem index')}</td>
             </tr>
-            <tr><td>{t('Partner extraction from brochures')}</td><td>{t('Claude (live), with every quote checked against the source text')}</td><td>{t('Live AI · demo samples cached offline')}</td></tr>
+            <tr><td>{t('Partner discovery and extraction')}</td><td>{t('Open model (Llama via Groq) and web search; every quote and contact checked against the source page')}</td><td>{t('Live AI · demo runs replayable offline')}</td></tr>
             <tr><td>{t('Cluster demand, logistics, talent, cost indices')}</td><td>{t('Team estimates')}</td><td>{t('Illustrative · to be replaced')}</td></tr>
             <tr><td>{t('Partner companies')}</td><td>{t('Fictional profiles built to test the logic')}</td><td>{t('Illustrative')}</td></tr>
           </tbody>

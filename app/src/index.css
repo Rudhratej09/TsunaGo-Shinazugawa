@@ -30,7 +30,7 @@ body {
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
 }
-button, input, select { font: inherit; color: inherit; }
+button, input, select, textarea { font: inherit; color: inherit; }
 a { color: inherit; }
 ::selection { background: var(--sakura-soft); }
 
@@ -50,6 +50,7 @@ a { color: inherit; }
 .brand img { height: 30px; width: auto; display: block; }
 .steps { display: flex; gap: 2px; margin-left: auto; }
 .steps button {
+  white-space: nowrap;
   background: none; border: 0; padding: 8px 14px; cursor: pointer;
   font-size: 14px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted);
   border-bottom: 1px solid transparent;
@@ -358,3 +359,40 @@ textarea.source:focus { background: var(--paper-2); }
 /* Break the Japanese hero headline only at the space we put after the comma. */
 .lang-ja .hero .h1 { word-break: keep-all; overflow-wrap: anywhere; font-size: clamp(30px, 4vw, 52px); }
 .list-head .h3 { white-space: nowrap; }
+
+/* ---------- Partner Scout ---------- */
+.source.goal { min-height: 110px; max-height: 220px; font-size: 18px; }
+.scout { display: grid; grid-template-columns: 1fr 1.15fr; gap: 28px; margin-top: 24px; align-items: start; }
+.timeline { padding: 8px 20px 16px; }
+.tl { display: grid; grid-template-columns: 28px 1fr; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--hair); }
+.tl:last-child { border-bottom: 0; }
+.tl b { font-weight: 500; }
+.tl p { margin: 4px 0 0; font-size: 14px; color: var(--ink-2); }
+.tl-dot { width: 26px; height: 26px; border: 1px solid var(--ink); border-radius: 50%; display: grid; place-items: center; font-size: 13px; background: #fff; }
+.tl.done .tl-dot { background: var(--ink); color: #fff; }
+.tl.skip { color: var(--muted); }
+.tl.skip .tl-dot { border-style: dashed; color: var(--muted); }
+.tl.error .tl-dot { border-color: var(--shu); color: var(--shu); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.chips .tag { text-transform: none; letter-spacing: 0; font-size: 13px; }
+.scout-card { margin-top: 14px; padding: 16px 18px; }
+.scout-card-head { display: flex; justify-content: space-between; gap: 12px; }
+.scout-card .name { font-weight: 500; font-size: 17px; display: block; }
+.scout-card .meta { font-size: 13px; color: var(--muted); }
+.scout-card .score { font-family: var(--display); font-size: 30px; line-height: 1; }
+.scout-card-row { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; margin: 10px 0 12px; }
+.small-btn { padding: 8px 14px; font-size: 12px; }
+.modal-wrap { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; pointer-events: none; }
+.modal {
+  pointer-events: auto; width: min(720px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px); overflow-y: auto; background: #fff; border: 1px solid var(--ink); box-shadow: 0 30px 80px rgba(0,0,0,.12);
+}
+.modal .list-head { gap: 12px; }
+.x-small { width: 30px; height: 30px; border: 1px solid var(--ink); background: #fff; cursor: pointer; }
+.mini { display: block; font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.input { width: 100%; border: 1px solid var(--hair); padding: 10px 12px; font-size: 15px; background: #fff; resize: vertical; line-height: 1.5; }
+.input:focus { outline: none; border-color: var(--ink); }
+.contact-line { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 12px; font-size: 14px; }
+.contact-line em { font-style: normal; color: var(--pass); font-size: 12px; margin-left: 4px; }
+a.btn { text-decoration: none; }
+@media (max-width: 960px) { .scout { grid-template-columns: 1fr; } }

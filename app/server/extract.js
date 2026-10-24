@@ -1,15 +1,12 @@
-// Server-side brochure extraction with Claude. Runs in the Vite dev/preview server
-// (see vite.config.js) and as a Vercel function (api/extract.js), so the API key
-// never reaches the browser.
-import Anthropic from '@anthropic-ai/sdk'
+// Server-side brochure extraction. Runs in the Vite dev/preview server (see vite.config.js)
+// and as a Vercel function (api/extract.js), so API keys never reach the browser.
+import { chatJSON, handle, LLMError } from './llm.js'
 
-const STATES = ['an', 'ap', 'ar', 'as', 'br', 'ch', 'ct', 'dn', 'dd', 'dl', 'ga', 'gj', 'hr', 'hp', 'jk', 'jh', 'ka', 'kl', 'ld', 'mp',
+export const STATES = ['an', 'ap', 'ar', 'as', 'br', 'ch', 'ct', 'dn', 'dd', 'dl', 'ga', 'gj', 'hr', 'hp', 'jk', 'jh', 'ka', 'kl', 'ld', 'mp',
   'mh', 'mn', 'ml', 'mz', 'nl', 'or', 'py', 'pb', 'rj', 'sk', 'tn', 'tg', 'tr', 'up', 'ut', 'wb']
-const MAX_CHARS = 20000
-
 const score = { type: 'integer', description: '0-100 strength of customer access in this industry; 0 if not mentioned' }
 
-const SCHEMA = {
+export const SCHEMA = {
   type: 'object',
   additionalProperties: false,
   required: ['name', 'type', 'hq_city', 'hq_state', 'presence', 'industries', 'engineers', 'install', 'calibration',
@@ -57,81 +54,59 @@ const SCHEMA = {
   },
 }
 
-const SYSTEM = `You extract structured partner profiles from Indian distributor, integrator and service-company brochures for Japanese SMEs entering India.
+export const SYSTEM = `You extract structured partner profiles from Indian distributor, integrator and service-company brochures for Japanese SMEs entering India.
 Rules:
 - Use only what the text says. When a field is not stated, use the documented default and add a short item to "unknowns".
 - Every fact must carry a "quote" copied character-for-character from the source text, so a reviewer can find it.
 - Treat all brochure statements as the company's own claims; do not upgrade them into verified facts.
 - State codes are lowercase two-letter Indian state codes (mh Maharashtra, tn Tamil Nadu, ka Karnataka, gj Gujarat, hr Haryana, dl Delhi, rj Rajasthan, tg Telangana, ap Andhra Pradesh, up Uttar Pradesh, wb West Bengal, mp Madhya Pradesh, pb Punjab, kl Kerala, or Odisha).`
 
-export class ExtractError extends Error {
-  constructor(code, message, status = 400) {
-    super(message)
-    this.code = code
-    this.status = status
+const TYPES = ['Distributor', 'Integrator', 'Service contractor', 'JV candidate']
+const CHECKS = ['industry', 'install', 'budget', 'conflict', 'technical', 'speed', 'japan']
+const num = (v, d, lo = 0, hi = 1e6) => (Number.isFinite(+v) ? Math.min(hi, Math.max(lo, +v)) : d)
+const str = (v) => (typeof v === 'string' ? v.trim() : '')
+
+// Open models don't always honour the schema; coerce their output into the exact shape the app uses.
+export function normalizeProfile(d = {}) {
+  const ind = d.industries || {}
+  return {
+    name: str(d.name) || 'Unnamed company',
+    type: TYPES.includes(d.type) ? d.type : 'Distributor',
+    hq_city: str(d.hq_city),
+    hq_state: STATES.includes(d.hq_state) ? d.hq_state : 'unknown',
+    presence: (Array.isArray(d.presence) ? d.presence : [])
+      .filter((p) => p && STATES.includes(p.state))
+      .map((p) => ({ state: p.state, strength: num(p.strength, 0.5, 0.1, 1) })),
+    industries: Object.fromEntries(['auto', 'electronics', 'machinery', 'pharma', 'food'].map((k) => [k, Math.round(num(ind[k], 0, 0, 100))])),
+    engineers: Math.round(num(d.engineers, 0, 0, 10000)),
+    install: d.install === true,
+    calibration: d.calibration === true,
+    response_hours: Math.round(num(d.response_hours, 48, 1, 720)),
+    japan_principals: Math.round(num(d.japan_principals, 0, 0, 100)),
+    min_commit_lakh: num(d.min_commit_lakh, 20, 0, 100000),
+    margin_pct: num(d.margin_pct, 20, 0, 100),
+    service_fee_pct: num(d.service_fee_pct, 0, 0, 100),
+    years: Math.round(num(d.years, 0, 0, 300)),
+    conflict: str(d.conflict),
+    facts: (Array.isArray(d.facts) ? d.facts : [])
+      .filter((f) => f && str(f.fact) && str(f.quote))
+      .map((f) => ({ fact: str(f.fact), fact_ja: str(f.fact_ja) || str(f.fact), quote: str(f.quote), check: CHECKS.includes(f.check) ? f.check : 'industry' })),
+    unknowns: (Array.isArray(d.unknowns) ? d.unknowns : []).map(str).filter(Boolean),
+    unknowns_ja: (Array.isArray(d.unknowns_ja) ? d.unknowns_ja : []).map(str).filter(Boolean),
   }
 }
 
-export async function extractPartner(text, apiKey) {
-  if (typeof text !== 'string' || text.trim().length < 40) throw new ExtractError('too_short', 'Paste at least a paragraph of brochure text.')
-  if (text.length > MAX_CHARS) throw new ExtractError('too_long', `Text is ${text.length} characters; the limit is ${MAX_CHARS}. Paste the relevant section.`)
-  if (!apiKey) throw new ExtractError('no_key', 'ANTHROPIC_API_KEY is not set on the server.', 503)
+const MAX_CHARS = 20000
 
-  const client = new Anthropic({ apiKey, timeout: 60_000 })
-  const t0 = Date.now()
-  let response
-  try {
-    response = await client.beta.messages.create({
-      model: 'claude-opus-5-5',
-      max_tokens: 16000,
-      betas: ['server-side-fallback-2026-07-01'],
-      fallbacks: 'default',
-      // Low effort keeps the live demo fast; extraction is a well-specified task.
-      output_config: { effort: 'low', format: { type: 'json_schema', schema: SCHEMA } },
-      system: SYSTEM,
-      messages: [{ role: 'user', content: `<brochure>\n${text}\n</brochure>\n\nExtract the partner profile.` }],
-    })
-  } catch (error) {
-    if (error instanceof Anthropic.AuthenticationError) throw new ExtractError('auth', 'The server API key was rejected.', 502)
-    if (error instanceof Anthropic.RateLimitError) throw new ExtractError('rate_limit', 'Rate limited — try again in a moment.', 429)
-    if (error instanceof Anthropic.APIError) throw new ExtractError('api', `Claude API error ${error.status}.`, 502)
-    throw new ExtractError('network', 'Could not reach the Claude API.', 502)
-  }
-
-  if (response.stop_reason === 'refusal') throw new ExtractError('refusal', 'The model declined this text.', 422)
-  if (response.stop_reason === 'max_tokens') throw new ExtractError('truncated', 'The response was cut off; paste a shorter section.', 422)
-  const block = response.content.find((b) => b.type === 'text')
-  if (!block) throw new ExtractError('empty', 'The model returned no profile.', 502)
-  let data
-  try {
-    data = JSON.parse(block.text)
-  } catch {
-    throw new ExtractError('parse', 'The model returned invalid JSON.', 502)
-  }
-  return { data, model: response.model, ms: Date.now() - t0 }
+export async function extractPartner(text, env) {
+  if (typeof text !== 'string' || text.trim().length < 40) throw new LLMError('too_short', 'Paste at least a paragraph of brochure text.', 400)
+  if (text.length > MAX_CHARS) throw new LLMError('too_long', `Text is ${text.length} characters; the limit is ${MAX_CHARS}. Paste the relevant section.`, 400)
+  const out = await chatJSON(env, {
+    system: SYSTEM,
+    user: `<brochure>\n${text}\n</brochure>\n\nExtract the partner profile.`,
+    schema: SCHEMA,
+  })
+  return { data: normalizeProfile(out.data), model: out.model, provider: out.provider, ms: out.ms }
 }
 
-// Minimal Node request handler shared by the Vite middleware and the Vercel function.
-export async function handleExtract(req, res, apiKey) {
-  const send = (status, body) => {
-    res.statusCode = status
-    res.setHeader('Content-Type', 'application/json')
-    res.end(JSON.stringify(body))
-  }
-  if (req.method !== 'POST') return send(405, { error: 'method', message: 'Use POST.' })
-  try {
-    let body = req.body
-    if (!body) {
-      const chunks = []
-      for await (const c of req) chunks.push(c)
-      body = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}')
-    } else if (typeof body === 'string') {
-      body = JSON.parse(body)
-    }
-    send(200, await extractPartner(body.text, apiKey))
-  } catch (e) {
-    if (e instanceof ExtractError) return send(e.status, { error: e.code, message: e.message })
-    if (e instanceof SyntaxError) return send(400, { error: 'bad_json', message: 'Request body must be JSON.' })
-    send(500, { error: 'server', message: 'Unexpected server error.' })
-  }
-}
+export const handleExtract = (req, res, env) => handle(req, res, (body) => extractPartner(body.text, env))

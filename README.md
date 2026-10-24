@@ -14,17 +14,44 @@ npm run dev      # http://localhost:5173
 npm run build    # production build in app/dist
 ```
 
-## Live AI extraction
+## AI setup (free)
 
-The **✦ Analyze partner** page sends pasted brochure text to Claude via a small server
-route (`/api/extract`), so the API key never reaches the browser.
+TsunaGo runs on open models through any OpenAI-compatible provider. The free default:
+
+| Key | What for | Get it free |
+|---|---|---|
+| `GROQ_API_KEY` | The model (Llama 3.3 70B) for Partner Scout and brochure analysis | https://console.groq.com |
+| `TAVILY_API_KEY` | Web search for Partner Scout | https://tavily.com |
 
 ```bash
-cp app/.env.example app/.env.local   # then fill in ANTHROPIC_API_KEY
+cp app/.env.example app/.env.local   # then paste the two keys
 ```
 
-The key is read by the Vite dev/preview server and by `app/api/extract.js` on Vercel.
-Without a key, the two sample brochures still work from a cached result.
+Keys stay on the server (`/api/*`), never in the browser. Alternatives are in `app/.env.example`:
+Hugging Face, OpenRouter, Claude, or **Ollama for a fully offline model**.
+Without keys, the simulated Partner Scout run and the two sample brochures still work.
+
+## Partner Scout (AI agent)
+
+**✦ Partner Scout** takes a goal in English or Japanese and runs an agent loop in short steps:
+plan searches → search the web → read companies' own websites (two at a time) → extract a
+profile with a verbatim quote per fact → score with the TsunaGo engine → search again if fewer
+than two partners pass → draft a bilingual introduction.
+
+- Directories and marketplaces (IndiaMART, Justdial, …) are skipped by policy. Only companies'
+  own public pages and the business contacts they publish are used.
+- Every quote, email and phone number is checked against the fetched page; anything not found is flagged.
+- Messages open as email or WhatsApp drafts. Nothing is sent automatically.
+- **Save run** downloads a recording; **Replay saved run** plays it back offline (use this as the stage backup).
+
+## Deploy on Vercel (free)
+
+1. Import the GitHub repo in Vercel and set **Root Directory** to `app`.
+2. Add `GROQ_API_KEY` and `TAVILY_API_KEY` under *Settings → Environment Variables*.
+3. Deploy. `app/vercel.json` builds the Vite site and serves `app/api/*` as functions.
+
+The agent runs as many short requests driven by the browser, so it fits the free plan's function time limit.
+Note that Vercel's free Hobby plan is for non-commercial use.
 
 ## Japanese
 

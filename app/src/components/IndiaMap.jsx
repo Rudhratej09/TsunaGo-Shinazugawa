@@ -31,7 +31,7 @@ const LABEL = {
   neemrana: { dx: -9, dy: 6, anchor: 'end' }, ahmedabad: { dx: -9, dy: 4, anchor: 'end' },
 }
 
-export default function IndiaMap({ presence = {}, hq, clusters = [], highlightClusters = [], height = 420, animateKey }) {
+export default function IndiaMap({ presence = {}, hq, clusters = [], highlightClusters = [], height = 420, animateKey, markers = [] }) {
   const petals = useMemo(() => {
     const out = []
     Object.entries(presence).forEach(([state, strength]) => {
@@ -96,6 +96,18 @@ export default function IndiaMap({ presence = {}, hq, clusters = [], highlightCl
               fontSize={hot ? 16 : 13} fontWeight={hot ? 500 : 400} fontFamily="Inter, sans-serif" fill={hot ? '#111' : '#888'}
               style={{ paintOrder: 'stroke', stroke: '#fff', strokeWidth: 3.5 }}>{c.name.split(' – ')[0]}</text>
           </g>
+        )
+      })}
+
+      {markers.filter((m) => m.lon != null).map((m, i) => {
+        const [x, y] = project(m.lon, m.lat)
+        return (
+          <motion.g key={m.id || i} initial={{ opacity: 0, scale: 0.3 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 + i * 0.12, type: 'spring', stiffness: 260, damping: 18 }}
+            style={{ transformOrigin: `${x}px ${y}px` }}>
+            <circle cx={x} cy={y} r={7} fill={m.ok ? '#d76f8c' : '#fff'} stroke={m.ok ? '#fff' : '#b8323f'} strokeWidth={1.6} />
+            <text x={x + 10} y={y - 8} fontSize={13} fontWeight={500} fontFamily="Inter, sans-serif" fill="#111"
+              style={{ paintOrder: 'stroke', stroke: '#fff', strokeWidth: 3.5 }}>{m.label}</text>
+          </motion.g>
         )
       })}
 

@@ -139,7 +139,7 @@ export default function Analyze({ answers, customPartners, addPartner, open, go 
               <motion.div key="err" className="cell" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                 <span className="h3" style={{ color: 'var(--shu)' }}>{t("Couldn't analyze this text")}</span>
                 <p>{error}</p>
-                <p className="small muted">{t('The two sample brochures always work, even offline. For your own text, the server needs ANTHROPIC_API_KEY (see README).')}</p>
+                <p className="small muted">{t('The two sample brochures always work, even offline. For your own text, the server needs a model key such as the free GROQ_API_KEY (see README).')}</p>
               </motion.div>
             )}
             {state === 'done' && scored && (
