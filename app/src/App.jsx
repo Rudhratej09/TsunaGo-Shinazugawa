@@ -12,6 +12,8 @@ import Why from './pages/Why.jsx'
 import Analyze from './pages/Analyze.jsx'
 import { PROFILES } from './data/catalog.js'
 import { DEFAULT_PRIORITIES, evaluate } from './lib/engine.js'
+import { LangProvider } from './i18n.jsx'
+import { translate } from './i18n-core.js'
 
 const STEPS = [
   ['profile', 'Profile'],
@@ -26,6 +28,14 @@ const initialAnswers = () => {
   return { profile: null, ...p.defaults, priorities: { ...DEFAULT_PRIORITIES } }
 }
 
+const readLang = () => {
+  try {
+    return localStorage.getItem('tsunago-lang') === 'ja' ? 'ja' : 'en'
+  } catch {
+    return 'en'
+  }
+}
+
 const readRoute = () => {
   const r = window.location.hash.replace('#/', '')
   return ROUTES.includes(r) ? r : 'home'
@@ -37,6 +47,22 @@ export default function App() {
   const [panel, setPanel] = useState(null)
   const [shortlist, setShortlist] = useState([])
   const [customPartners, setCustomPartners] = useState([])
+  const [lang, setLangState] = useState(readLang)
+  const setLang = (l) => {
+    setLangState(l)
+    try {
+      localStorage.setItem('tsunago-lang', l)
+    } catch {
+      // Storage can be unavailable (private mode); the toggle still works for this visit.
+    }
+  }
+  const t = (x, v) => translate(lang, x, v)
+
+  useEffect(() => {
+    document.documentElement.lang = lang
+    // On <body> so the side panel and intro (outside .app) pick up the Japanese fonts too.
+    document.body.classList.toggle('lang-ja', lang === 'ja')
+  }, [lang])
   // Play the opening animation only when the site is opened on the home page.
   const [intro, setIntro] = useState(() =>
     BRAND.intro && readRoute() === 'home' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'playing' : 'done')
@@ -74,7 +100,7 @@ export default function App() {
   const props = { answers, set, go, result, open, selected: panel?.id, shortlist, toggleShortlist }
 
   return (
-    <>
+    <LangProvider value={{ lang, setLang }}>
       <Sakura density={route === 'home' ? 34 : 16} />
       <div className="app">
         <header className="top">
@@ -82,11 +108,15 @@ export default function App() {
           <nav className="steps" aria-label="Steps">
             {STEPS.map(([id, label], i) => (
               <button key={id} className={route === id ? 'on' : ''} disabled={i >= reached} onClick={() => go(id)}>
-                <i>{i + 1}</i>{label}
+                <i>{i + 1}</i>{t(label)}
               </button>
             ))}
-            <button className={route === 'analyze' ? 'on' : ''} onClick={() => go('analyze')} style={{ marginLeft: 12, borderLeft: '1px solid var(--hair)' }}>✦ Analyze partner</button>
-            <button className={route === 'why' ? 'on' : ''} onClick={() => go('why')}>Why TsunaGo</button>
+            <button className={route === 'analyze' ? 'on' : ''} onClick={() => go('analyze')} style={{ marginLeft: 12, borderLeft: '1px solid var(--hair)' }}>✦ {t('Analyze partner')}</button>
+            <button className={route === 'why' ? 'on' : ''} onClick={() => go('why')}>{t('Why TsunaGo')}</button>
+            <span className="lang-switch" role="group" aria-label="Language">
+              <button className={lang === 'en' ? 'on' : ''} onClick={() => setLang('en')}>EN</button>
+              <button className={lang === 'ja' ? 'on' : ''} onClick={() => setLang('ja')}>日本語</button>
+            </span>
           </nav>
         </header>
 
@@ -112,8 +142,8 @@ export default function App() {
         </AnimatePresence>
 
         <footer className="foot">
-          <span>TEAM SHINAZUGAWA · Thapar × JETRO Hackathon</span>
-          <span>Prototype · partner profiles are fictional · map data © svg-maps (CC BY 4.0)</span>
+          <span>{t('TEAM SHINAZUGAWA · Thapar × JETRO Hackathon')}</span>
+          <span>{t('Prototype · partner profiles are fictional · map data © svg-maps (CC BY 4.0)')}</span>
         </footer>
       </div>
 
@@ -121,6 +151,6 @@ export default function App() {
         <Intro onReveal={() => setIntro((s) => (s === 'playing' ? 'revealing' : s))} onDone={() => setIntro('done')} />
       )}
       <SidePanel item={livePanel} answers={answers} result={result} onClose={() => setPanel(null)} shortlist={shortlist} toggleShortlist={toggleShortlist} />
-    </>
+    </LangProvider>
   )
 }

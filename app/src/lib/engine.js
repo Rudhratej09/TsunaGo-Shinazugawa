@@ -1,5 +1,6 @@
 import { BUDGETS, CLUSTERS, INDUSTRIES, PARTNERS, TIMINGS } from '../data/catalog.js'
 import { STATE_NAMES } from './geo.js'
+import { en, msg } from '../i18n-core.js'
 
 const clamp = (v, lo = 0, hi = 100) => Math.max(lo, Math.min(hi, v))
 const round = (v) => Math.round(v)
@@ -47,11 +48,11 @@ export function checkPartner(p, a) {
   const checks = []
 
   if (p.type === 'Service contractor') {
-    checks.push({ id: 'industry', label: 'Sells to your customers', short: 'service-only', status: 'warn', detail: 'Service-only firm: pair it with a sales channel.' })
+    checks.push({ id: 'industry', label: 'Sells to your customers', short: 'service-only', status: 'warn', detailT: msg('Service-only firm: pair it with a sales channel.') })
   } else {
     checks.push({
       id: 'industry', label: 'Sells to your customers', short: 'weak customer access', status: ind >= 55 ? 'pass' : 'fail',
-      detail: ind >= 55 ? `Strong ${industryLabel(a.industry).toLowerCase()} access (${ind}/100).` : `Weak ${industryLabel(a.industry).toLowerCase()} access (${ind}/100).`,
+      detailT: msg(ind >= 55 ? 'Strong customer access in {ind} ({n}/100).' : 'Weak customer access in {ind} ({n}/100).', { ind: industryLabel(a.industry), n: ind }),
     })
   }
 
@@ -59,26 +60,29 @@ export function checkPartner(p, a) {
     const ok = p.install && p.engineers >= 5
     checks.push({
       id: 'install', label: 'Can install & service locally', short: 'no local install', status: ok ? 'pass' : 'fail',
-      detail: ok ? `${p.engineers} field engineers, ${p.responseHours}h response.` : p.install ? `Only ${p.engineers} engineers — too thin for installed equipment.` : 'Sales-only partner — fails the essential installation check.',
+      detailT: ok ? msg('{n} field engineers, {h}h response.', { n: p.engineers, h: p.responseHours })
+        : p.install ? msg('Only {n} engineers — too thin for installed equipment.', { n: p.engineers })
+          : msg('Sales-only partner — fails the essential installation check.'),
     })
   } else {
-    checks.push({ id: 'install', label: 'Can install & service locally', status: 'na', detail: 'Not required: your own team supports installations.' })
+    checks.push({ id: 'install', label: 'Can install & service locally', status: 'na', detailT: msg('Not required: your own team supports installations.') })
   }
 
   checks.push({
     id: 'budget', label: 'Fits your entry budget', short: 'over budget', status: p.minCommitLakh <= cap ? 'pass' : 'fail',
-    detail: `Minimum commitment ₹${p.minCommitLakh}L vs your cap of ₹${cap}L.`,
+    detailT: msg('Minimum commitment ₹{m}L vs your cap of ₹{c}L.', { m: p.minCommitLakh, c: cap }),
   })
 
   checks.push({
     id: 'conflict', label: 'No competing principal', short: 'competing brand', status: p.conflict ? 'fail' : 'pass',
-    detail: p.conflict || 'No competing brand found in this product category.',
+    detailT: msg(p.conflict || 'No competing brand found in this product category.'),
   })
 
   const open = p.evidence.filter((e) => e.status !== 'verified').map((e) => ({ partner: p.name, fact: e.fact, source: e.source }))
   p.references.filter((r) => r.status !== 'verified').forEach((r) => open.push({ partner: p.name, fact: `Reference: ${r.label}`, source: 'Reference list' }))
   ;(p.unknowns || []).forEach((u) => open.push({ partner: p.name, fact: u, source: 'Not stated in brochure' }))
 
+  for (const c of checks) c.detail = en(c.detailT)
   const eligible = !checks.some((c) => c.status === 'fail')
   return { checks, eligible, open }
 }
@@ -167,22 +171,23 @@ export function analyse(p, a, clusters, partners = []) {
   }[verdict]
   const verdictJa = { lead: 'パイロットの第一候補', backup: '有力な代替候補', watch: '継続観察', exclude: '必須条件を満たさない' }[verdict]
 
-  const strengths = best.map((k) => `${cap(SUB_LABEL[k])} is a relative strength (${round(p.sub[k])}/100).`)
-  if (inTop) strengths.push(`Already active in ${topRegion.name}, your highest-ranked region.`)
-  if (p.japanPrincipals >= 3) strengths.push(`Has worked with ${p.japanPrincipals} Japanese principals — fewer cultural onboarding costs.`)
+  // Bullet points are msg() objects so the panel can render them in either language.
+  const strengths = best.map((k) => msg('{d} is a relative strength ({n}/100).', { d: cap(SUB_LABEL[k]), n: round(p.sub[k]) }))
+  if (inTop) strengths.push(msg('Already active in {r}, your highest-ranked region.', { r: topRegion.name }))
+  if (p.japanPrincipals >= 3) strengths.push(msg('Has worked with {n} Japanese principals — fewer cultural onboarding costs.', { n: p.japanPrincipals }))
 
-  const risks = fails.map((f) => f.detail)
-  if (p.type === 'Service contractor' && pairWith) risks.push(`Cannot sell on its own — pair it with ${pairWith.name} for sales reach.`)
-  risks.push(`Weakest dimension: ${SUB_LABEL[weak]} (${round(p.sub[weak])}/100).`)
-  if (model === 'A' && !p.install) risks.push('Every installation depends on engineers flying from Japan; budget for travel and slower response.')
-  if (p.lastVerified < '2026-04') risks.push(`Profile last verified ${p.lastVerified} — refresh before contracting.`)
+  const risks = fails.map((f) => f.detailT)
+  if (p.type === 'Service contractor' && pairWith) risks.push(msg('Cannot sell on its own — pair it with {p} for sales reach.', { p: pairWith.name }))
+  risks.push(msg('Weakest dimension: {d} ({n}/100).', { d: SUB_LABEL[weak], n: round(p.sub[weak]) }))
+  if (model === 'A' && !p.install) risks.push(msg('Every installation depends on engineers flying from Japan; budget for travel and slower response.'))
+  if (p.lastVerified < '2026-04') risks.push(msg('Profile last verified {d} — refresh before contracting.', { d: p.lastVerified }))
 
-  const verify = p.open.map((o) => `${o.fact} (${o.source})`)
-  if (!verify.length) verify.push('All listed facts are verified; confirm commercial terms in writing.')
+  const verify = p.open.map((o) => msg('{f} ({s})', { f: o.fact, s: o.source }))
+  if (!verify.length) verify.push(msg('All listed facts are verified; confirm commercial terms in writing.'))
 
   const negotiation = model === 'B'
-    ? `Anchor on a service SLA (≤${Math.min(p.responseHours, 24)}h on-site), engineer certification on your equipment, and a service fee tied to uptime.`
-    : `Anchor on demo targets per quarter, exclusivity limited to ${regions.slice(0, 2).join(' and ')}, and a margin step-down after year one.`
+    ? msg('Anchor on a service SLA (≤{h}h on-site), engineer certification on your equipment, and a service fee tied to uptime.', { h: Math.min(p.responseHours, 24) })
+    : msg('Anchor on demo targets per quarter, exclusivity limited to {r}, and a margin step-down after year one.', { r: regions.slice(0, 2).join(' / ') })
 
   const summary = `${p.name} scores ${p.score}/100 for an entry into ${industryLabel(a.industry).toLowerCase()} under service model ${model} (${MODEL_COPY[model].title.toLowerCase()}). ${verdictText}. ${p.eligible ? `Its edge is ${SUB_LABEL[best[0]]} and ${SUB_LABEL[best[1]]}` : `It fails: ${fails.map((f) => f.label.toLowerCase()).join(', ')}`}; active in ${regions.slice(0, 3).join(', ')}.`
 
@@ -203,14 +208,17 @@ export function buildPlan(a, shortlist, clusters) {
   const w = (n) => Math.max(1, round(n * k))
   const region = clusters[0]
   const lead = shortlist[0]
+  // Titles/details are i18n templates; `vars` fills their {placeholders}.
+  const names = shortlist.map((p) => p.name).join(', ')
+  const sla = lead ? Math.min(lead.responseHours, 24) : 24
   const steps = [
-    { from: 0, to: w(2), owner: 'HQ', title: 'Confirm shortlist & send bilingual intro brief', detail: `Approach ${shortlist.map((p) => p.name).join(', ') || 'your shortlisted partners'} with a one-page brief generated by TsunaGo.` },
+    { from: 0, to: w(2), owner: 'HQ', title: 'Confirm shortlist & send bilingual intro brief', detail: names ? 'Approach {names} with a one-page brief generated by TsunaGo.' : 'Approach your shortlisted partners with a one-page brief generated by TsunaGo.', vars: { names } },
     { from: w(1), to: w(5), owner: 'TsunaGo', title: 'Verify open facts & call references', detail: 'Close every "claimed" or "pending" item before any term sheet.' },
     { from: w(3), to: w(8), owner: 'Expert', title: 'Expert review: classification, duties, standards, contract', detail: 'Customs classification, applicable standards and certification, distributor agreement and tax registration are reviewed by qualified advisers.' },
     model === 'B'
-      ? { from: w(6), to: w(10), owner: 'Partner', title: 'Agree service SLA & certify partner engineers', detail: `Target on-site response ≤${lead ? Math.min(lead.responseHours, 24) : 24}h; remote training plus one on-site certification visit.` }
+      ? { from: w(6), to: w(10), owner: 'Partner', title: 'Agree service SLA & certify partner engineers', detail: 'Target on-site response ≤{sla}h; remote training plus one on-site certification visit.', vars: { sla } }
       : { from: w(6), to: w(10), owner: 'HQ', title: 'Plan engineer travel & remote support desk', detail: 'Fix a visit calendar and a Japanese–English remote support channel.' },
-    { from: w(9), to: w(14), owner: 'Partner', title: `Ship demo unit to ${region.name}`, detail: 'Joint demos with 3–5 target buyers; record objections and price feedback.' },
+    { from: w(9), to: w(14), owner: 'Partner', title: 'Ship demo unit to {region}', detail: 'Joint demos with 3–5 target buyers; record objections and price feedback.', vars: { region: region.name } },
     { from: w(14), to: weeks, owner: 'Partner', title: 'Run paid pilot with 2–3 customers', detail: 'Track demos, quotes, response time and service tickets monthly.' },
     { from: weeks - w(2), to: weeks, owner: 'HQ', title: 'Review gate: scale, adjust or switch partner', detail: 'Decide using the KPIs below — not on relationship alone.' },
   ]
@@ -218,7 +226,7 @@ export function buildPlan(a, shortlist, clusters) {
     { label: 'Qualified demos', target: '≥ 8' },
     { label: 'Quotes issued', target: '≥ 4' },
     { label: model === 'B' ? 'On-site response' : 'Remote fix rate', target: model === 'B' ? '≤ 24h' : '≥ 70%' },
-    { label: 'Partner follow-through', target: '≥ 90% actions on time' },
+    { label: 'Partner follow-through', target: '≥ 90%' },
   ]
   return { steps, weeks, kpis, region, model }
 }

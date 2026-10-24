@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { BRAND } from '../brand.js'
+import { useI18n } from '../i18n.jsx'
 
 const FLOW = [
   ['Choose your profile', 'Product · sector · starting point'],
@@ -9,6 +10,7 @@ const FLOW = [
 ]
 
 export default function Home({ go, intro = 'done' }) {
+  const { t } = useI18n()
   const shown = intro !== 'playing'
   const fade = (i) => ({
     initial: { opacity: 0, y: 16 },
@@ -19,15 +21,14 @@ export default function Home({ go, intro = 'done' }) {
     <div className="page">
       <section className="hero">
         <div>
-          <motion.div className="eyebrow" {...fade(0)}>India market entry · Japanese SMEs</motion.div>
-          <motion.h1 className="h1" {...fade(1)}>Plan your India entry with evidence.</motion.h1>
+          <motion.div className="eyebrow" {...fade(0)}>{t('India market entry · Japanese SMEs')}</motion.div>
+          <motion.h1 className="h1" {...fade(1)}>{t('Plan your India entry with evidence.')}</motion.h1>
           <motion.p className="lede" {...fade(2)}>
-            Pick a profile, answer six questions, and compare regions and partners side by side.
-            Each recommendation shows why it was made and what still needs checking.
+            {t('Pick a profile, answer six questions, and compare regions and partners side by side. Each recommendation shows why it was made and what still needs checking.')}
           </motion.p>
           <motion.div style={{ display: 'flex', gap: 12, marginTop: 30, flexWrap: 'wrap' }} {...fade(3)}>
-            <button className="btn" onClick={() => go('profile')}>Start →</button>
-            <button className="btn ghost" onClick={() => go('why')}>Why TsunaGo</button>
+            <button className="btn" onClick={() => go('profile')}>{t('Start →')}</button>
+            <button className="btn ghost" onClick={() => go('why')}>{t('Why TsunaGo')}</button>
           </motion.div>
         </div>
         {/* The intro animation lands the logo exactly on this element. */}
@@ -36,11 +37,11 @@ export default function Home({ go, intro = 'done' }) {
       </section>
 
       <motion.div className="grid box flow" {...fade(4)}>
-        {FLOW.map(([t, d], i) => (
-          <div className="cell" key={t}>
+        {FLOW.map(([title, d], i) => (
+          <div className="cell" key={title}>
             <span className="num">0{i + 1}</span>
-            <h4>{t}</h4>
-            <p>{d}</p>
+            <h4>{t(title)}</h4>
+            <p>{t(d)}</p>
           </div>
         ))}
       </motion.div>

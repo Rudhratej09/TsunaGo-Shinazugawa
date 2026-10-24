@@ -1,12 +1,13 @@
 import { motion } from 'framer-motion'
 import { JP_PRESENCE } from '../data/catalog.js'
 import { STATE_NAMES } from '../lib/geo.js'
+import { useI18n } from '../i18n.jsx'
 
 const USPS = [
   ['Connected, not static', 'A report answers once. TsunaGo is a decision model: flip one requirement and partner fit, region rank, price and plan all recompute.'],
   ['Evidence on every claim', 'Each fact shows its source, date and status: verified, claimed or pending. Unknowns become tasks, not hidden assumptions.'],
   ['Hard checks before scores', 'Essential checks (installation, budget, conflicts, customer access) exclude a partner outright. No weighted average can hide a deal-breaker.'],
-  ['Bilingual by default', 'Summaries in English and Japanese, so HQ decision-makers in Japan read the same reasoning as the India team.'],
+  ['Bilingual by default', 'The whole interface and every analyst summary switch between English and Japanese, so HQ in Japan reads the same reasoning as the India team.'],
   ['Pilot, then sustain', 'The output is a dated pilot plan with owners and review-gate KPIs, and TsunaGo keeps tracking partner follow-through after launch.'],
   ['Experts where it matters', 'Legal, tax and customs stay with qualified advisers. TsunaGo hands them a structured brief, so paid expert hours go further.'],
 ]
@@ -22,7 +23,7 @@ const QA = [
   {
     q: 'Where exactly is the AI?',
     a: [
-      'In three narrow, checkable steps: (1) reading brochures, partner records and official sources to extract capability facts; (2) retrieving the passage that backs each fact; (3) writing the bilingual analyst summary from those facts only.',
+      'Live, in the Analyze page: paste any partner brochure and Claude extracts a structured profile, copying the exact sentence behind every fact. TsunaGo then checks each quote against the source text and flags any it cannot find, so the AI cannot quietly invent a capability.',
       'Ranking itself is transparent rules and math: essential checks, then weighted scores the SME controls. Open the Evidence tab on any partner to see quote → fact → check.',
     ],
   },
@@ -61,61 +62,62 @@ const COMPARE = [
 ]
 
 export default function Why({ go }) {
+  const { t } = useI18n()
   return (
     <div className="page">
-      <div className="eyebrow">For SMEs, JETRO and judges</div>
-      <h1 className="h1" style={{ fontSize: 'clamp(30px,4vw,48px)' }}>Why TsunaGo</h1>
-      <p className="lede">A first-time entrant doesn't lack information. It lacks a way to connect it. TsunaGo turns scattered research into one decision, with reasons.</p>
+      <div className="eyebrow">{t('For SMEs, JETRO and judges')}</div>
+      <h1 className="h1" style={{ fontSize: 'clamp(30px,4vw,48px)' }}>{t('Why TsunaGo')}</h1>
+      <p className="lede">{t("A first-time entrant doesn't lack information. It lacks a way to connect it. TsunaGo turns scattered research into one decision, with reasons.")}</p>
 
       <div className="grid box usp" style={{ marginTop: 36 }}>
-        {USPS.map(([t, d], i) => (
-          <motion.div className="cell" key={t} initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: (i % 3) * 0.08 }}>
-            <span className="num">0{i + 1}</span><h4>{t}</h4><p>{d}</p>
+        {USPS.map(([title, d], i) => (
+          <motion.div className="cell" key={title} initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: (i % 3) * 0.08 }}>
+            <span className="num">0{i + 1}</span><h4>{t(title)}</h4><p>{t(d)}</p>
           </motion.div>
         ))}
       </div>
 
-      <h2 className="h2" style={{ marginTop: 64 }}>How TsunaGo compares</h2>
-      <p className="small muted">Positioning hypotheses to validate in user testing with SMEs and JETRO advisers.</p>
+      <h2 className="h2" style={{ marginTop: 64 }}>{t('How TsunaGo compares')}</h2>
+      <p className="small muted">{t('Positioning hypotheses to validate in user testing with SMEs and JETRO advisers.')}</p>
       <div className="box" style={{ overflowX: 'auto' }}>
         <table className="compare">
-          <thead><tr><th /><th>Consultant study</th><th>Ad-hoc desk research</th><th>TsunaGo</th></tr></thead>
-          <tbody>{COMPARE.map((r) => <tr key={r[0]}>{r.map((c, i) => <td key={i} className={i === 3 ? 'us' : ''}>{c}</td>)}</tr>)}</tbody>
+          <thead><tr><th /><th>{t('Consultant study')}</th><th>{t('Ad-hoc desk research')}</th><th>TsunaGo</th></tr></thead>
+          <tbody>{COMPARE.map((r) => <tr key={r[0]}>{r.map((c, i) => <td key={i} className={i === 3 ? 'us' : ''}>{t(c)}</td>)}</tr>)}</tbody>
         </table>
       </div>
 
-      <h2 className="h2" style={{ marginTop: 64 }}>Questions we expect</h2>
+      <h2 className="h2" style={{ marginTop: 64 }}>{t('Questions we expect')}</h2>
       <hr className="rule" style={{ margin: '12px 0 0' }} />
       {QA.map(({ q, a }) => (
         <div className="qa" key={q}>
-          <h4>{q}</h4>
-          <div>{a.map((p) => <p key={p}>{p}</p>)}</div>
+          <h4>{t(q)}</h4>
+          <div>{a.map((p) => <p key={p}>{t(p)}</p>)}</div>
         </div>
       ))}
 
-      <h2 className="h2" style={{ marginTop: 64 }}>Data behind the prototype</h2>
+      <h2 className="h2" style={{ marginTop: 64 }}>{t('Data behind the prototype')}</h2>
       <div className="box" style={{ overflowX: 'auto' }}>
         <table className="compare">
-          <thead><tr><th>Data</th><th>Source</th><th>Status</th></tr></thead>
+          <thead><tr><th>{t('Data')}</th><th>{t('Source')}</th><th>{t('Status')}</th></tr></thead>
           <tbody>
             <tr>
-              <td>Japanese companies in India: {JP_PRESENCE.totalCompanies.toLocaleString()} companies, {JP_PRESENCE.totalEstablishments.toLocaleString()} establishments; by state: {Object.entries(JP_PRESENCE.states).map(([s, v]) => `${STATE_NAMES[s]} ${v.companies}`).join(', ')}</td>
+              <td>{t('Japanese companies in India: {c} companies, {e} establishments; by state: {s}', { c: JP_PRESENCE.totalCompanies.toLocaleString(), e: JP_PRESENCE.totalEstablishments.toLocaleString(), s: Object.entries(JP_PRESENCE.states).map(([s, v]) => `${t(STATE_NAMES[s])} ${v.companies}`).join(', ') })}</td>
               <td><a href={JP_PRESENCE.url} target="_blank" rel="noreferrer">{JP_PRESENCE.source}</a></td>
-              <td>Sourced. Drives the Japan-ecosystem index</td>
+              <td>{t('Sourced. Drives the Japan-ecosystem index')}</td>
             </tr>
-            <tr><td>Partner extraction from brochures</td><td>Claude (live), with every quote checked against the source text</td><td>Live AI · demo samples cached offline</td></tr>
-            <tr><td>Cluster demand, logistics, talent, cost indices</td><td>Team estimates</td><td>Illustrative · to be replaced</td></tr>
-            <tr><td>Partner companies</td><td>Fictional profiles built to test the logic</td><td>Illustrative</td></tr>
+            <tr><td>{t('Partner extraction from brochures')}</td><td>{t('Claude (live), with every quote checked against the source text')}</td><td>{t('Live AI · demo samples cached offline')}</td></tr>
+            <tr><td>{t('Cluster demand, logistics, talent, cost indices')}</td><td>{t('Team estimates')}</td><td>{t('Illustrative · to be replaced')}</td></tr>
+            <tr><td>{t('Partner companies')}</td><td>{t('Fictional profiles built to test the logic')}</td><td>{t('Illustrative')}</td></tr>
           </tbody>
         </table>
       </div>
 
       <div className="box cell" style={{ marginTop: 48, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
         <div>
-          <div className="eyebrow">Validate</div>
-          <p style={{ margin: '8px 0 0', maxWidth: 640 }}>Pilot test: run TsunaGo next to manual research for the same SMEs and compare speed, quality and evidence coverage. Then test the assisted-assessment fee.</p>
+          <div className="eyebrow">{t('Validate')}</div>
+          <p style={{ margin: '8px 0 0', maxWidth: 640 }}>{t('Pilot test: run TsunaGo next to manual research for the same SMEs and compare speed, quality and evidence coverage. Then test the assisted-assessment fee.')}</p>
         </div>
-        <button className="btn" onClick={() => go('profile')}>Try the flow →</button>
+        <button className="btn" onClick={() => go('profile')}>{t('Try the flow →')}</button>
       </div>
     </div>
   )

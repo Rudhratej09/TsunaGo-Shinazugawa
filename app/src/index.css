@@ -345,3 +345,16 @@ textarea.source:focus { background: var(--paper-2); }
 .fact p { margin: 2px 0 0; font-size: 14px; color: var(--pass); }
 .fact p.bad { color: var(--shu); }
 @media (max-width: 960px) { .analyze { grid-template-columns: 1fr; } .source { min-height: 280px; } }
+
+/* ---------- Language ---------- */
+.lang-switch { display: inline-flex; border: 1px solid var(--ink); margin-left: 12px; align-self: center; }
+.lang-switch button { padding: 4px 10px !important; border: 0 !important; margin: 0 !important; font-size: 13px !important; letter-spacing: .04em !important; color: var(--ink) !important; }
+.lang-switch button.on { background: var(--ink); color: #fff !important; }
+/* Japanese mode: Cinzel has no kana/kanji, so headings fall back to Noto Serif JP; body uses Noto Sans JP. */
+.lang-ja { --display: 'Cinzel', 'Noto Serif JP', serif; --serif: 'Cormorant Garamond', 'Noto Serif JP', serif; --sans: 'Inter', 'Noto Sans JP', system-ui, sans-serif; font-family: var(--sans); }
+.lang-ja .h1, .lang-ja .h2, .lang-ja .panel-title { letter-spacing: 0.04em; }
+.lang-ja .eyebrow, .lang-ja .steps button { letter-spacing: 0.08em; }
+.lang-ja .steps button, .lang-ja .btn { text-transform: none; }
+/* Break the Japanese hero headline only at the space we put after the comma. */
+.lang-ja .hero .h1 { word-break: keep-all; overflow-wrap: anywhere; font-size: clamp(30px, 4vw, 52px); }
+.list-head .h3 { white-space: nowrap; }

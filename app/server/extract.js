@@ -13,7 +13,7 @@ const SCHEMA = {
   type: 'object',
   additionalProperties: false,
   required: ['name', 'type', 'hq_city', 'hq_state', 'presence', 'industries', 'engineers', 'install', 'calibration',
-    'response_hours', 'japan_principals', 'min_commit_lakh', 'margin_pct', 'service_fee_pct', 'years', 'conflict', 'facts', 'unknowns'],
+    'response_hours', 'japan_principals', 'min_commit_lakh', 'margin_pct', 'service_fee_pct', 'years', 'conflict', 'facts', 'unknowns', 'unknowns_ja'],
   properties: {
     name: { type: 'string' },
     type: { type: 'string', enum: ['Distributor', 'Integrator', 'Service contractor', 'JV candidate'] },
@@ -43,15 +43,17 @@ const SCHEMA = {
     facts: {
       type: 'array',
       items: {
-        type: 'object', additionalProperties: false, required: ['fact', 'quote', 'check'],
+        type: 'object', additionalProperties: false, required: ['fact', 'fact_ja', 'quote', 'check'],
         properties: {
           fact: { type: 'string', description: 'Short normalised fact, e.g. "14 application engineers"' },
+          fact_ja: { type: 'string', description: 'The same fact in natural Japanese for headquarters readers' },
           quote: { type: 'string', description: 'Exact sentence or phrase copied verbatim from the source text' },
           check: { type: 'string', enum: ['industry', 'install', 'budget', 'conflict', 'technical', 'speed', 'japan'] },
         },
       },
     },
     unknowns: { type: 'array', items: { type: 'string' }, description: 'Things a buyer must still verify because the text does not say' },
+    unknowns_ja: { type: 'array', items: { type: 'string' }, description: 'The unknowns list in natural Japanese, same order' },
   },
 }
 
