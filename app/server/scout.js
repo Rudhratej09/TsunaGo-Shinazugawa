@@ -2,6 +2,7 @@
 // (Vercel's free plan cuts off slow functions). The browser drives the loop.
 import { chatJSON, handle, LLMError } from './llm.js'
 import { requireUser } from './auth.js'
+import { tavilySearch } from './search.js'
 import { normalizeProfile, SCHEMA as PROFILE_SCHEMA, STATES } from './extract.js'
 
 // Directories and marketplaces are skipped on purpose: their terms forbid scraping and their
@@ -75,27 +76,11 @@ const domainOf = (url) => {
 }
 
 export async function search({ queries }, env) {
-  const key = env.TAVILY_API_KEY
-  if (!key) throw new LLMError('no_search_key', 'No search provider is configured. Set TAVILY_API_KEY (free tier) on the server.', 503)
+  if (!env.TAVILY_API_KEY) throw new LLMError('no_search_key', 'No search provider is configured. Set TAVILY_API_KEY (free tier) on the server.', 503)
   const list = (Array.isArray(queries) ? queries : []).map(String).filter(Boolean).slice(0, 3)
   if (!list.length) throw new LLMError('no_queries', 'No search queries to run.', 400)
   const t0 = Date.now()
-  const runs = await Promise.all(list.map(async (q) => {
-    try {
-      const res = await fetch('https://api.tavily.com/search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
-        body: JSON.stringify({ query: q, max_results: 8, search_depth: 'basic', include_answer: false }),
-      })
-      if (res.status === 401 || res.status === 403) throw new LLMError('auth', 'The Tavily API key was rejected.')
-      if (res.status === 429 || res.status === 432) throw new LLMError('rate_limit', 'Search quota reached — try again later.', 429)
-      if (!res.ok) throw new LLMError('api', `Search error ${res.status}.`)
-      return { q, results: (await res.json()).results || [] }
-    } catch (e) {
-      if (e instanceof LLMError) throw e
-      throw new LLMError('network', 'Could not reach the search service.')
-    }
-  }))
+  const runs = await Promise.all(list.map(async (q) => ({ q, results: await tavilySearch(q, env) })))
   const seen = new Set()
   const candidates = []
   const skipped = []
