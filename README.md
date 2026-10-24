@@ -147,6 +147,7 @@ in `app/src/i18n-ja.js`, keyed by the English text.
 ## Pitch
 
 See [`docs/PITCH.md`](docs/PITCH.md) for the 3-minute script, Q&A cheat sheet and demo-day checklist.
+For how everything works under the hood, read [`docs/TECHNICAL.md`](docs/TECHNICAL.md).
 
 ## Changing the logo
 
