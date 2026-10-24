@@ -14,6 +14,13 @@ npm run dev      # http://localhost:5173
 npm run build    # production build in app/dist
 ```
 
+## Changing the logo
+
+Replace `app/public/logo.png` (or point `logo` in `app/src/brand.js` at a new file).
+A transparent PNG or SVG works best; any aspect ratio is fine. The opening animation
+measures the image and lands it on the home-page logo automatically. Set `intro: false`
+in `brand.js` to turn the animation off.
+
 ## Demo path (≈3 minutes)
 
 1. **Home → Begin** → pick *Equipment manufacturer*.

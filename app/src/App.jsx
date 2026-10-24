@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import Sakura from './components/Sakura.jsx'
+import Intro from './components/Intro.jsx'
+import { BRAND } from './brand.js'
 import SidePanel from './components/SidePanel.jsx'
 import Home from './pages/Home.jsx'
 import { NeedsStep, ProfileStep } from './pages/Setup.jsx'
@@ -33,6 +35,9 @@ export default function App() {
   const [answers, setAnswers] = useState(initialAnswers)
   const [panel, setPanel] = useState(null)
   const [shortlist, setShortlist] = useState([])
+  // Play the opening animation only when the site is opened on the home page.
+  const [intro, setIntro] = useState(() =>
+    BRAND.intro && readRoute() === 'home' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'playing' : 'done')
 
   useEffect(() => {
     const onHash = () => setRoute(readRoute())
@@ -71,7 +76,7 @@ export default function App() {
       <Sakura density={route === 'home' ? 34 : 16} />
       <div className="app">
         <header className="top">
-          <button className="brand" onClick={() => go('home')} aria-label="TsunaGo home"><b>TSUNAGO</b><span>繋</span></button>
+          <button className="brand" onClick={() => go('home')} aria-label={`${BRAND.name} home`}><img src={BRAND.logo} alt={BRAND.name} /></button>
           <nav className="steps" aria-label="Steps">
             {STEPS.map(([id, label], i) => (
               <button key={id} className={route === id ? 'on' : ''} disabled={i >= reached} onClick={() => go(id)}>
@@ -90,7 +95,7 @@ export default function App() {
 
         <AnimatePresence mode="wait">
           <motion.main key={route} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.35 }} style={{ flex: 1 }}>
-            {route === 'home' && <Home go={go} />}
+            {route === 'home' && <Home go={go} intro={intro} />}
             {route === 'why' && <Why go={go} />}
             {route === 'profile' && <ProfileStep answers={answers} pick={pick} go={go} />}
             {route === 'needs' && (answers.profile ? <NeedsStep {...props} /> : <ProfileStep answers={answers} pick={pick} go={go} />)}
@@ -105,6 +110,9 @@ export default function App() {
         </footer>
       </div>
 
+      {intro !== 'done' && (
+        <Intro onReveal={() => setIntro((s) => (s === 'playing' ? 'revealing' : s))} onDone={() => setIntro('done')} />
+      )}
       <SidePanel item={livePanel} answers={answers} result={result} onClose={() => setPanel(null)} shortlist={shortlist} toggleShortlist={toggleShortlist} />
     </>
   )

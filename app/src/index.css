@@ -46,9 +46,8 @@ a { color: inherit; }
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--ink);
 }
-.brand { display: flex; align-items: baseline; gap: 10px; cursor: pointer; background: none; border: 0; padding: 0; }
-.brand b { font-family: var(--display); font-weight: 500; font-size: 26px; letter-spacing: 0.06em; }
-.brand span { font-family: var(--jp); font-size: 20px; color: var(--sakura-deep); }
+.brand { display: flex; align-items: center; cursor: pointer; background: none; border: 0; padding: 0; }
+.brand img { height: 30px; width: auto; display: block; }
 .steps { display: flex; gap: 2px; margin-left: auto; }
 .steps button {
   background: none; border: 0; padding: 8px 14px; cursor: pointer;
@@ -99,7 +98,18 @@ a { color: inherit; }
 .tag.sakura { border-color: var(--sakura); background: var(--sakura-soft); color: #8c3d52; }
 
 /* ---------- Home ---------- */
-.hero { padding: 72px 0 8px; max-width: 760px; }
+.hero { display: grid; grid-template-columns: 1.3fr 1fr; gap: 56px; align-items: center; padding: 64px 0 8px; }
+.hero-logo { width: 100%; max-width: 520px; height: auto; justify-self: end; display: block; }
+
+/* ---------- Intro ---------- */
+.intro { position: fixed; inset: 0; z-index: 100; cursor: pointer; }
+.intro-bg { position: absolute; inset: 0; background: #fff; }
+.intro-logo { position: fixed; left: 50%; top: 50%; width: 400px; height: auto; transform: translate(-50%, -50%); will-change: transform; }
+.intro-canvas { position: absolute; inset: 0; pointer-events: none; }
+.intro-skip {
+  position: absolute; right: 24px; bottom: 24px; padding: 8px 16px; background: rgba(255,255,255,.85);
+  border: 1px solid var(--ink); font-size: 13px; letter-spacing: .16em; text-transform: uppercase; cursor: pointer;
+}
 .flow { grid-template-columns: repeat(4, 1fr); margin-top: 64px; }
 .flow .cell + .cell, .usp .cell + .cell { border-left: 1px solid var(--ink); }
 .flow h4, .usp h4 { font-family: var(--display); font-weight: 500; font-size: 18px; letter-spacing: 0.05em; margin: 10px 0 6px; }
@@ -281,7 +291,8 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   .steps { margin-left: 0; overflow-x: auto; width: 100%; }
   .page { padding: 32px 16px 72px; }
   .two { grid-template-columns: 1fr; }
-  .hero { padding-top: 24px; }
+  .hero { grid-template-columns: 1fr; gap: 28px; padding-top: 24px; }
+  .hero-logo { justify-self: start; max-width: 320px; grid-row: 1; }
     .flow, .profiles, .form, .summary-strip, .usp { grid-template-columns: 1fr; }
   .flow .cell + .cell, .usp .cell + .cell, .profile + .profile, .summary-strip .cell + .cell { border-left: 0; border-top: 1px solid var(--ink); }
   .field:nth-child(odd) { border-right: 0; }
