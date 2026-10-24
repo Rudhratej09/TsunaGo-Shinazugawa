@@ -569,36 +569,106 @@ monitoring layer after entry (deadline alerts for compliance steps).
 
 ## 15. Technical questions judges ask
 
+Answer in one or two sentences, then stop. If you don't know, say what you would measure.
+
+### Architecture and AI
+
 **Is this just a ChatGPT wrapper?**
 No. Scoring, regions, compliance scheduling and costs are deterministic code. The AI is used for
 reading and writing, and its output is verified (quotes, contacts) or tagged (evidence levels).
 Partner Scout is an agent with tools and a reflect step, not a single prompt.
 
-**How do you stop hallucinations?**
-Three layers: schemas restrict what the model can return; every fact needs a verbatim quote that
-we search for in the source text; contacts must literally appear on the company's site. Anything
-unverified is visibly marked.
+**What makes Partner Scout an "agent" rather than a chatbot?**
+It plans its own search queries, uses tools (search, read a website), observes the results, scores
+them with the engine, and if fewer than two partners pass it reflects on why and searches again —
+then it drafts outreach. The loop decides its next step from what it found.
 
-**Why not run everything on the server?**
-The browser holds the plan (privacy, no database cost) and orchestrates the agent so no single
-server call exceeds the free 60-second limit. The server exists only to protect keys.
+**Why does the agent loop run in the browser?**
+Vercel's free plan stops a function after about 60 seconds, and a full run takes longer. Each tool
+call is short; the browser orchestrates them and shows each step live. As a bonus, the user sees
+exactly what the agent is doing.
+
+**Why Groq and gpt-oss instead of GPT-4 or Claude?**
+Free, fast and open-weight, which keeps cost near zero for SMEs. The layer is provider-agnostic: one
+environment variable switches to Claude, Hugging Face, OpenRouter, or a fully offline Ollama model.
 
 **What happens if Groq goes down or retires the model?**
-Automatic fallback to other models; the provider can be switched with one environment variable
-(Hugging Face, OpenRouter, Claude, or fully offline with Ollama). Demo backup: replay a saved run.
+Automatic fallback to the next model (this already happened: Groq retired Llama 3.3 in Aug 2026 and
+the app moved to gpt-oss with a fallback chain). For the stage there is also a recorded run that
+replays offline.
 
-**How does it scale?**
-Static front end on a CDN, stateless serverless functions, per-user rate of a few AI calls per
-task. Costs scale with AI usage only; free-tier models keep marginal cost near zero.
+**What was the hardest technical problem?**
+Three, all solved: the 60-second serverless limit (browser-orchestrated agent), model retirement
+(automatic fallback), and Google sign-in failing on per-deployment URLs (origin check that redirects
+to the production site).
+
+### Trust and accuracy
+
+**How do you stop hallucinations?**
+Three layers: schemas restrict what the model can return; every fact needs a verbatim quote that we
+search for in the source text; contacts must literally appear on the company's site. Anything
+unverified is visibly marked.
+
+**How accurate is the extraction?**
+We have not benchmarked it yet, and we say so. The quote check makes errors visible rather than
+silent. Next step: 50 hand-labelled company pages, measuring field accuracy and quote-match rate.
+
+**What stops a malicious website from manipulating the AI (prompt injection)?**
+Page text is wrapped and marked as data, outputs must fit a strict schema, and every claim is then
+verified against the page by code — an injected instruction cannot make an unverified claim look
+verified. Nothing is ever sent without the user's confirmation.
+
+**Where does the market and regulatory data come from, and how do you keep it current?**
+Every figure links to its source and date (ACMA, state agencies, NITI Aayog, Embassy of Japan/JETRO,
+RBI, DPIIT, CBIC…). Rules carry a verification level and a "checked" date; recent changes appear in
+a change feed. In production, a reviewer would re-check rules on a schedule.
+
+**Why do some rules say "sources conflict"?**
+Because 2026 changed several of them (land-border FDI in March, the Income-tax Act in April, labour
+rules in May, the BIS machinery order). We show the uncertainty instead of picking one source.
+
+**Why don't you use IndiaMART or Justdial?**
+Their terms forbid scraping and listings mix in personal contact data. Partner Scout skips about 30
+directory and marketplace domains and reads only companies' own public websites.
+
+### Security and privacy
 
 **Is it secure?**
-Keys server-side only, Google sign-in with verified signatures, HttpOnly cookies, origin checks,
-SSRF-safe fetching, sanitised rendering, no automatic emails, no scraping of directories.
+Keys are server-side only, Google sign-in signatures are verified, the session is an HttpOnly cookie,
+cross-site requests are refused, the website reader blocks private addresses (SSRF), AI output is
+sanitised before display, and emails are never sent automatically.
 
-**How is Japanese handled?**
-Full UI translation (~850 strings), bilingual content data, and AI outputs requested in the
-viewer's language — with Japanese back-translation in the message coach so the SME can check
-meaning.
+**What data do you store?**
+The SME's plan stays in its own browser (no database). Gmail tokens stay in browser memory. Our server
+stores nothing; it only forwards AI requests with the key. A production version holding SME data
+would need a DPDP Act (India) and APPI (Japan) review.
+
+**Can a team share a plan?**
+Yes, by exporting a venture as a `.tsunago.json` file and importing it elsewhere. Cloud sync with
+sign-in is on the roadmap.
+
+### Product and scale
+
+**How does it scale to thousands of SMEs?**
+Static front end on a CDN, stateless serverless functions, a handful of AI calls per task. Cost
+scales only with AI usage; moving to paid model tiers lifts the free-tier rate limits.
+
+**Can it run without internet or keys?**
+The deterministic parts (scores, market, compliance, playbook) work fully. The simulated Scout run,
+recorded-run replay and two sample brochures work without keys; Ollama can run the model locally.
+
+**How is the Japanese quality ensured?**
+About 860 interface strings are translated, content data is bilingual, and AI outputs are requested
+in the viewer's language. The message coach adds a Japanese back-translation so the SME can check
+the meaning of what it sends.
+
+**How would JETRO use this?**
+As a first-pass tool before an SME meets an adviser: the SME arrives with a structured plan, a
+shortlist and open questions, so adviser time goes on judgement rather than research.
+
+**What would you build next?**
+An extraction benchmark, primary-source checks on the remaining rules with a CA, live GST/MCA
+registry checks for partners, cloud-synced ventures, and deadline alerts after entry.
 
 ---
 
