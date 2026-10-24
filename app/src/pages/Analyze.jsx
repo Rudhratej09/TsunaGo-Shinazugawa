@@ -5,6 +5,7 @@ import { extractBrochure, findQuote, toPartner } from '../lib/ai.js'
 import { evaluate, MODEL_COPY } from '../lib/engine.js'
 import { STATE_NAMES } from '../lib/geo.js'
 import { useI18n } from '../i18n.jsx'
+import { GoogleButton, useAuth } from '../auth.jsx'
 
 const STEPS = ['Reading the brochure', 'Extracting capability facts', 'Linking each fact to its sentence', 'Scoring against your requirements']
 const CHECK_NAME = { industry: 'Customer access', install: 'Installation', budget: 'Budget', conflict: 'Conflicts', technical: 'Technical', speed: 'Speed', japan: 'Japan exp.' }
@@ -33,6 +34,7 @@ function Highlighted({ text, facts, active, setActive }) {
 
 export default function Analyze({ answers, customPartners, addPartner, open, go }) {
   const { t, tm, lang } = useI18n()
+  const auth = useAuth()
   const [text, setText] = useState(SAMPLES[0].text)
   const [state, setState] = useState('idle') // idle | running | done | error
   const [step, setStep] = useState(0)
@@ -140,6 +142,7 @@ export default function Analyze({ answers, customPartners, addPartner, open, go 
                 <span className="h3" style={{ color: 'var(--shu)' }}>{t("Couldn't analyze this text")}</span>
                 <p>{error}</p>
                 <p className="small muted">{t('The two sample brochures always work, even offline. For your own text, the server needs a model key such as the free GROQ_API_KEY (see README).')}</p>
+                {auth.enabled && !auth.user && <div style={{ marginTop: 12 }}><GoogleButton lang={lang} /></div>}
               </motion.div>
             )}
             {state === 'done' && scored && (

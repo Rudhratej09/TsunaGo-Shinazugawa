@@ -2,6 +2,7 @@ import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import { handleExtract } from './server/extract.js'
 import { handleScout } from './server/scout.js'
+import { handleAuth } from './server/auth.js'
 
 // Serves the /api routes from the dev and preview servers, keeping API keys server-side.
 // On Vercel the same handlers run as functions from app/api/.
@@ -10,6 +11,7 @@ function apiRoutes(env) {
   const mount = (server) => {
     server.middlewares.use('/api/extract', (req, res) => handleExtract(req, res, env))
     server.middlewares.use('/api/scout', (req, res) => handleScout(req, res, env))
+    server.middlewares.use('/api/auth', (req, res) => handleAuth(req, res, env))
   }
   return { name: 'tsunago-api', configureServer: mount, configurePreviewServer: mount }
 }

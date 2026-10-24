@@ -1,6 +1,7 @@
 // Server-side brochure extraction. Runs in the Vite dev/preview server (see vite.config.js)
 // and as a Vercel function (api/extract.js), so API keys never reach the browser.
 import { chatJSON, handle, LLMError } from './llm.js'
+import { requireUser } from './auth.js'
 
 export const STATES = ['an', 'ap', 'ar', 'as', 'br', 'ch', 'ct', 'dn', 'dd', 'dl', 'ga', 'gj', 'hr', 'hp', 'jk', 'jh', 'ka', 'kl', 'ld', 'mp',
   'mh', 'mn', 'ml', 'mz', 'nl', 'or', 'py', 'pb', 'rj', 'sk', 'tn', 'tg', 'tr', 'up', 'ut', 'wb']
@@ -109,4 +110,7 @@ export async function extractPartner(text, env) {
   return { data: normalizeProfile(out.data), model: out.model, provider: out.provider, ms: out.ms }
 }
 
-export const handleExtract = (req, res, env) => handle(req, res, (body) => extractPartner(body.text, env))
+export async function handleExtract(req, res, env) {
+  if (!(await requireUser(req, res, env))) return
+  return handle(req, res, (body) => extractPartner(body.text, env))
+}

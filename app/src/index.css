@@ -396,3 +396,12 @@ textarea.source:focus { background: var(--paper-2); }
 .contact-line em { font-style: normal; color: var(--pass); font-size: 12px; margin-left: 4px; }
 a.btn { text-decoration: none; }
 @media (max-width: 960px) { .scout { grid-template-columns: 1fr; } }
+
+/* ---------- Sign-in ---------- */
+.auth-slot { display: flex; align-items: center; min-height: 32px; }
+.gbtn { min-height: 32px; }
+.user-menu { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; white-space: nowrap; }
+.user-menu img, .user-menu .avatar { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--hair); }
+.user-menu .avatar { display: inline-grid; place-items: center; background: var(--sakura-soft); font-weight: 500; }
+.user-name { max-width: 110px; overflow: hidden; text-overflow: ellipsis; }
+.signin-gate { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }

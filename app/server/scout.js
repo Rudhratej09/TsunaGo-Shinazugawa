@@ -1,6 +1,7 @@
 // Partner Scout: the agent's tools, each a short server call so no request runs long
 // (Vercel's free plan cuts off slow functions). The browser drives the loop.
 import { chatJSON, handle, LLMError } from './llm.js'
+import { requireUser } from './auth.js'
 import { normalizeProfile, SCHEMA as PROFILE_SCHEMA, STATES } from './extract.js'
 
 // Directories and marketplaces are skipped on purpose: their terms forbid scraping and their
@@ -295,7 +296,7 @@ export function status(env) {
 
 const ACTIONS = { plan, search, read, draft }
 
-export function handleScout(req, res, env) {
+export async function handleScout(req, res, env) {
   const action = new URL(req.url, 'http://x').searchParams.get('action')
   if (action === 'status') {
     res.statusCode = 200
@@ -303,6 +304,7 @@ export function handleScout(req, res, env) {
     return res.end(JSON.stringify(status(env)))
   }
   const fn = ACTIONS[action]
+  if (fn && !(await requireUser(req, res, env))) return
   if (!fn) {
     res.statusCode = 404
     res.setHeader('Content-Type', 'application/json')

@@ -7,6 +7,7 @@ import { SCOUT_DEMO } from '../data/scoutDemo.js'
 import { evaluate } from '../lib/engine.js'
 import { draftFor, liveSource, replaySource, runScout, scoutStatus } from '../lib/scout.js'
 import { useI18n } from '../i18n.jsx'
+import { GoogleButton, useAuth } from '../auth.jsx'
 
 const GOALS = [
   'We make coordinate measuring machines (CMM) for automotive parts plants. We cannot install or service them ourselves in India, our budget is limited, and we want a paying pilot customer within six months.',
@@ -130,6 +131,7 @@ function DraftModal({ partner, draft, onClose, t, lang }) {
 
 export default function Scout({ answers, set, addPartners, open, go }) {
   const { t, lang } = useI18n()
+  const auth = useAuth()
   const [goal, setGoal] = useState(GOALS[0])
   const [status, setStatus] = useState(null)
   const [running, setRunning] = useState(false)
@@ -273,7 +275,11 @@ export default function Scout({ answers, set, addPartners, open, go }) {
             <input ref={fileRef} type="file" accept="application/json" hidden onChange={(e) => e.target.files[0] && loadRun(e.target.files[0])} />
             <button className="btn ghost" disabled={running} onClick={() => fileRef.current.click()}>{t('Replay saved run')}</button>
             <button className="btn ghost" disabled={running} onClick={runSimulated}>{t('Simulated run')}</button>
-            <button className="btn" disabled={running || !configured || goal.trim().length < 10} onClick={runLive}>{running ? t('Scouting…') : t('Run Partner Scout ✦')}</button>
+            {configured && auth.enabled && !auth.user ? (
+              <span className="signin-gate"><span className="small muted">{t('Sign in to run live')}</span><GoogleButton lang={lang} /></span>
+            ) : (
+              <button className="btn" disabled={running || !configured || goal.trim().length < 10} onClick={runLive}>{running ? t('Scouting…') : t('Run Partner Scout ✦')}</button>
+            )}
           </div>
         </div>
       </div>

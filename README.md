@@ -44,10 +44,23 @@ than two partners pass → draft a bilingual introduction.
 - Messages open as email or WhatsApp drafts. Nothing is sent automatically.
 - **Save run** downloads a recording; **Replay saved run** plays it back offline (use this as the stage backup).
 
+## Google sign-in (optional, recommended when deployed)
+
+When `GOOGLE_CLIENT_ID` is set, the live AI routes (`/api/scout`, `/api/extract`) require a Google
+sign-in, so visitors can't use up your free API quota. Simulated and replayed runs stay open.
+
+1. In Google Cloud Console → *APIs & Services → Credentials*, create an **OAuth client ID** (Web application).
+2. Add **Authorized JavaScript origins**: `http://localhost:5173` and `https://<your-app>.vercel.app`.
+3. Set `GOOGLE_CLIENT_ID` and a random `SESSION_SECRET` (32+ characters, e.g. `openssl rand -base64 48`).
+4. Optional: `ALLOWED_EMAILS="you@gmail.com,@thapar.edu"` limits who can sign in.
+
+The browser receives Google's signed ID token; the server verifies it against Google's public keys and
+sets a 7-day HttpOnly session cookie. No Google client secret is needed, and cross-site requests are refused.
+
 ## Deploy on Vercel (free)
 
 1. Import the GitHub repo in Vercel and set **Root Directory** to `app`.
-2. Add `GROQ_API_KEY` and `TAVILY_API_KEY` under *Settings → Environment Variables*.
+2. Add `GROQ_API_KEY`, `TAVILY_API_KEY` and (for sign-in) `GOOGLE_CLIENT_ID` + `SESSION_SECRET` under *Settings → Environment Variables*.
 3. Deploy. `app/vercel.json` builds the Vite site and serves `app/api/*` as functions.
 
 The agent runs as many short requests driven by the browser, so it fits the free plan's function time limit.

@@ -515,4 +515,6 @@ export const JA = {
   "Partner discovery and extraction": 'パートナーの発見と情報抽出',
   "Open model (Llama via Groq) and web search; every quote and contact checked against the source page": 'オープンモデル（Groq経由のLlama）とウェブ検索。すべての引用と連絡先を元のページと照合',
   "Live AI · demo runs replayable offline": 'ライブAI · デモ実行はオフラインで再生可能',
+  'Sign out': 'ログアウト',
+  'Sign in to run live': 'ライブ実行にはログインしてください',
 }

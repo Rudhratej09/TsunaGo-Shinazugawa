@@ -14,6 +14,7 @@ import Scout from './pages/Scout.jsx'
 import { PROFILES } from './data/catalog.js'
 import { DEFAULT_PRIORITIES, evaluate } from './lib/engine.js'
 import { LangProvider } from './i18n.jsx'
+import { GoogleButton, useAuth, UserMenu } from './auth.jsx'
 import { translate } from './i18n-core.js'
 
 const STEPS = [
@@ -48,6 +49,7 @@ export default function App() {
   const [panel, setPanel] = useState(null)
   const [shortlist, setShortlist] = useState([])
   const [customPartners, setCustomPartners] = useState([])
+  const auth = useAuth()
   const [lang, setLangState] = useState(readLang)
   const setLang = (l) => {
     setLangState(l)
@@ -119,6 +121,11 @@ export default function App() {
               <button className={lang === 'ja' ? 'on' : ''} onClick={() => setLang('ja')}>日本語</button>
             </span>
           </nav>
+          {auth.enabled && (
+            <div className="auth-slot">
+              {auth.user ? <UserMenu t={t} /> : <GoogleButton lang={lang} size="small" />}
+            </div>
+          )}
         </header>
 
         {stepIndex >= 0 && (
