@@ -12,6 +12,7 @@ import Why from './pages/Why.jsx'
 import Analyze from './pages/Analyze.jsx'
 import Scout from './pages/Scout.jsx'
 import Advisor from './pages/Advisor.jsx'
+import Compliance from './pages/Compliance.jsx'
 import { PROFILES } from './data/catalog.js'
 import { DEFAULT_PRIORITIES, evaluate } from './lib/engine.js'
 import { LangProvider } from './i18n.jsx'
@@ -24,7 +25,7 @@ const STEPS = [
   ['options', 'Options'],
   ['plan', 'Pilot plan'],
 ]
-const ROUTES = ['home', 'why', 'analyze', 'scout', 'advisor', ...STEPS.map((s) => s[0])]
+const ROUTES = ['home', 'why', 'analyze', 'scout', 'advisor', 'compliance', ...STEPS.map((s) => s[0])]
 
 const initialAnswers = () => {
   const p = PROFILES[1]
@@ -117,6 +118,7 @@ export default function App() {
             ))}
             <button className={route === 'scout' ? 'on' : ''} onClick={() => go('scout')} style={{ marginLeft: 12, borderLeft: '1px solid var(--hair)' }}>✦ {t('Partner Scout')}</button>
             <button className={route === 'advisor' ? 'on' : ''} onClick={() => go('advisor')}>{t('Advisor')}</button>
+            <button className={route === 'compliance' ? 'on' : ''} onClick={() => go('compliance')}>{t('Compliance')}</button>
             <button className={route === 'why' ? 'on' : ''} onClick={() => go('why')}>{t('Why TsunaGo')}</button>
             <span className="lang-switch" role="group" aria-label="Language">
               <button className={lang === 'en' ? 'on' : ''} onClick={() => setLang('en')}>EN</button>
@@ -145,6 +147,7 @@ export default function App() {
                 addPartners={(list) => setCustomPartners((cur) => [...cur.filter((x) => !list.some((p) => p.id === x.id)), ...list])} />
             )}
             {route === 'advisor' && <Advisor answers={answers} go={go} />}
+            {route === 'compliance' && <Compliance answers={answers} />}
             {route === 'analyze' && (
               <Analyze answers={answers} customPartners={customPartners} open={open} go={go}
                 addPartner={(p) => setCustomPartners((list) => [...list.filter((x) => x.id !== p.id), p])} />

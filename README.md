@@ -44,6 +44,26 @@ than two partners pass → draft a bilingual introduction.
 - Messages open as email or WhatsApp drafts. Nothing is sent automatically.
 - **Save run** downloads a recording; **Replay saved run** plays it back offline (use this as the stage backup).
 
+## Market & regions (Options, step 1)
+
+The Options step now opens on a market view for the chosen industry: an India sector overview
+with demand signals and barriers, the target customer (who buys, who decides, which partner they
+need), and a three-state comparison rated Strong / Moderate / Limited / Unknown on buyer base,
+Japanese ecosystem, demand for your product and service practicality. Click any rating for the
+reason, source and date. "Unknown" is shown whenever no source was found. Data: `app/src/data/market.js`.
+
+## Compliance roadmap
+
+**Compliance** turns a short wizard (entry mode, product category, land-border ownership,
+personal data, state, headcount, expats, revenue) into a roadmap of steps. Each step lists the
+authority, portal, documents, days (min–max), government and professional fee ranges, owner,
+risk if missed, source and verification level (official / secondary / sources conflict / general
+guidance). Also: a timeline with the critical path, one-time and yearly costs in INR or JPY,
+an entry-mode comparison, an import-duty calculator with the CEPA rate, a feed of 2025–26 rule
+changes, a professional sign-off record, and CSV / print export.
+Rules: `app/src/data/compliance.js`; engine: `app/src/lib/compliance.js`. Rules marked
+"conflict" or "general" must be checked against the primary source before you rely on them.
+
 ## Advisor (AI market-entry advisor)
 
 **Advisor** is a chat with a senior India market-entry advisor. Its instructions are the team's
