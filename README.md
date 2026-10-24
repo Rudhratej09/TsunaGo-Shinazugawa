@@ -14,6 +14,27 @@ npm run dev      # http://localhost:5173
 npm run build    # production build in app/dist
 ```
 
+## Live AI extraction
+
+The **✦ Analyze partner** page sends pasted brochure text to Claude via a small server
+route (`/api/extract`), so the API key never reaches the browser.
+
+```bash
+cp app/.env.example app/.env.local   # then fill in ANTHROPIC_API_KEY
+```
+
+The key is read by the Vite dev/preview server and by `app/api/extract.js` on Vercel.
+Without a key, the two sample brochures still work from a cached result.
+
+## Japanese
+
+The **EN / 日本語** switch in the header translates the whole interface. Strings live
+in `app/src/i18n-ja.js`, keyed by the English text.
+
+## Pitch
+
+See [`docs/PITCH.md`](docs/PITCH.md) for the 3-minute script, Q&A cheat sheet and demo-day checklist.
+
 ## Changing the logo
 
 Replace `app/public/logo.png` (or point `logo` in `app/src/brand.js` at a new file).
@@ -38,9 +59,8 @@ in `brand.js` to turn the animation off.
 
 ## How it works
 
-- `app/src/data/catalog.js`: prototype dataset (6 clusters, 10 **fictional** partners; indices are illustrative).
+- `app/src/data/catalog.js`: prototype dataset (6 clusters, 10 **fictional** partners). The Japan-presence index uses Embassy of Japan & JETRO company counts (Oct 2024); other indices are illustrative.
 - `app/src/lib/engine.js`: essential checks → weighted scoring → region ranking → cost model → analyst narrative → pilot plan.
 - `app/src/components/IndiaMap.jsx`: state map (svg-maps, CC BY 4.0) with a calibrated Mercator projection for cluster pins.
 
-The analyst summary is currently generated from structured evidence by templates. An LLM
-extraction/summary step can replace it without changing the UI.
+- `app/server/extract.js`: Claude extraction with a strict JSON schema; every quote is re-checked against the source in `app/src/lib/ai.js`.
