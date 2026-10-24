@@ -3,7 +3,7 @@ import { BUDGETS, INDUSTRIES, PRESENCE, PRIORITIES, PROFILES, TIMINGS } from '..
 import { MODEL_COPY, serviceModel } from '../lib/engine.js'
 import { useI18n } from '../i18n.jsx'
 
-export function ProfileStep({ answers, pick, go }) {
+export function ProfileStep({ answers, pick }) {
   const { t, lang } = useI18n()
   return (
     <div className="page">
@@ -20,9 +20,6 @@ export function ProfileStep({ answers, pick, go }) {
             <p><b style={{ fontWeight: 500 }}>{t(p.need)}.</b> {t(p.blurb)}</p>
           </motion.button>
         ))}
-      </div>
-      <div style={{ marginTop: 28, display: 'flex', justifyContent: 'flex-end' }}>
-        <button className="btn" disabled={!answers.profile} onClick={() => go('needs')}>{t('Continue →')}</button>
       </div>
     </div>
   )
@@ -41,7 +38,7 @@ function Seg({ value, options, onChange }) {
 
 const YESNO = [{ id: true, label: 'Yes' }, { id: false, label: 'No' }]
 
-export function NeedsStep({ answers, set, go }) {
+export function NeedsStep({ answers, set }) {
   const { t, lang } = useI18n()
   const model = serviceModel(answers)
   const setPrio = (k, v) => set({ priorities: { ...answers.priorities, [k]: v } })
@@ -107,10 +104,6 @@ export function NeedsStep({ answers, set, go }) {
         </motion.div>
       </div>
 
-      <div style={{ marginTop: 28, display: 'flex', justifyContent: 'space-between' }}>
-        <button className="btn ghost" onClick={() => go('profile')}>{t('← Profile')}</button>
-        <button className="btn" onClick={() => go('market')}>{t('Compare my entry options →')}</button>
-      </div>
     </div>
   )
 }

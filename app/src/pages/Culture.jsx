@@ -2,13 +2,10 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { COACH_EXAMPLE, MEETING_CHECKLIST, PLAYBOOK, SITUATIONS } from '../data/culture.js'
 import { serviceModel } from '../lib/engine.js'
+import { vget, vset } from '../lib/ventures.js'
 import { useI18n } from '../i18n.jsx'
 import { GoogleButton } from '../auth.jsx'
 
-const store = {
-  get(k, f) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : f } catch { return f } },
-  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)) } catch { /* storage unavailable */ } },
-}
 
 async function callCulture(action, body) {
   const res = await fetch(`/api/culture?action=${action}`, {
@@ -65,16 +62,16 @@ function Playbook({ t, L, lang, go }) {
 }
 
 function Coach({ t, lang, partners }) {
-  const [form, setForm] = useState(() => store.get('tsunago-coach-form', { message: '', situation: 'first', counterpart: '' }))
-  const [out, setOut] = useState(() => store.get('tsunago-coach', null))
+  const [form, setForm] = useState(() => vget('coach-form', { message: '', situation: 'first', counterpart: '' }))
+  const [out, setOut] = useState(() => vget('coach', null))
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
-  const set = (p) => setForm((f) => { const n = { ...f, ...p }; store.set('tsunago-coach-form', n); return n })
+  const set = (p) => setForm((f) => { const n = { ...f, ...p }; vset('coach-form', n); return n })
   const run = async () => {
     setBusy(true); setError(null)
     try {
       const r = await callCulture('coach', { ...form, lang })
-      setOut(r); store.set('tsunago-coach', r)
+      setOut(r); vset('coach', r)
     } catch (e) { setError(e) } finally { setBusy(false) }
   }
   return (
@@ -122,16 +119,16 @@ function Coach({ t, lang, partners }) {
 }
 
 function Negotiate({ t, lang, partners, answers }) {
-  const [form, setForm] = useState(() => store.get('tsunago-negotiate-form', { partner: '', product: answers.product || '', terms: '', position: '' }))
-  const [out, setOut] = useState(() => store.get('tsunago-negotiate', null))
+  const [form, setForm] = useState(() => vget('negotiate-form', { partner: '', product: answers.product || '', terms: '', position: '' }))
+  const [out, setOut] = useState(() => vget('negotiate', null))
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
-  const set = (p) => setForm((f) => { const n = { ...f, ...p }; store.set('tsunago-negotiate-form', n); return n })
+  const set = (p) => setForm((f) => { const n = { ...f, ...p }; vset('negotiate-form', n); return n })
   const run = async () => {
     setBusy(true); setError(null)
     try {
       const r = await callCulture('negotiate', { ...form, model: serviceModel(answers), lang })
-      setOut(r); store.set('tsunago-negotiate', r)
+      setOut(r); vset('negotiate', r)
     } catch (e) { setError(e) } finally { setBusy(false) }
   }
   const TERMS = ['Exclusivity', 'Distributor margin', 'Minimum order', 'Payment terms', 'Demo units', 'Service SLA']

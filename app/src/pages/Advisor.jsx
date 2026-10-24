@@ -5,6 +5,7 @@ import DOMPurify from 'dompurify'
 import { INDUSTRIES, PRESENCE, TIMINGS } from '../data/catalog.js'
 import { budgetLabel } from '../lib/engine.js'
 import { scoutStatus } from '../lib/scout.js'
+import { vget, vset } from '../lib/ventures.js'
 import { useI18n } from '../i18n.jsx'
 import { GoogleButton, useAuth } from '../auth.jsx'
 
@@ -29,23 +30,6 @@ const FIELDS = [
 const COMMANDS = ['give me the brief', 'show assumptions', 'what would change your answer?', 'go deeper on pricing']
 const START = 'Start the session: read my SME profile and give your opening message.'
 
-const store = {
-  get(key, fallback) {
-    try {
-      const v = localStorage.getItem(key)
-      return v ? JSON.parse(v) : fallback
-    } catch {
-      return fallback
-    }
-  },
-  set(key, value) {
-    try {
-      localStorage.setItem(key, JSON.stringify(value))
-    } catch {
-      // Storage can be unavailable (private mode); the session still works in memory.
-    }
-  },
-}
 
 // Seed the profile from the answers given in TsunaGo's guided flow.
 function profileFromAnswers(a) {
@@ -77,21 +61,21 @@ function Markdown({ text }) {
 export default function Advisor({ answers, go }) {
   const { t, lang } = useI18n()
   const auth = useAuth()
-  const [profile, setProfile] = useState(() => ({ ...profileFromAnswers(answers), ...store.get('tsunago-advisor-profile', {}) }))
-  const [messages, setMessages] = useState(() => store.get('tsunago-advisor-chat', []))
+  const [profile, setProfile] = useState(() => ({ ...profileFromAnswers(answers), ...vget('advisor-profile', {}) }))
+  const [messages, setMessages] = useState(() => vget('advisor-chat', []))
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
   const [status, setStatus] = useState(null)
-  const [editing, setEditing] = useState(() => store.get('tsunago-advisor-chat', []).length === 0)
+  const [editing, setEditing] = useState(() => vget('advisor-chat', []).length === 0)
   const endRef = useRef(null)
 
   useEffect(() => {
     scoutStatus().then(setStatus)
   }, [])
-  useEffect(() => store.set('tsunago-advisor-profile', profile), [profile])
+  useEffect(() => vset('advisor-profile', profile), [profile])
   useEffect(() => {
-    store.set('tsunago-advisor-chat', messages)
+    vset('advisor-chat', messages)
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
   }, [messages, busy])
 
