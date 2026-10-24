@@ -2,6 +2,8 @@
 
 Team Shinazugawa · Thapar × JETRO Hackathon
 
+**Live demo: https://tsuna-go-shinazugawa.vercel.app/** · Judge handout: [`docs/TsunaGo-Judge-Handout.pdf`](docs/TsunaGo-Judge-Handout.pdf) · Technical report: [`docs/TsunaGo-Technical-Report.pdf`](docs/TsunaGo-Technical-Report.pdf)
+
 TsunaGo connects the decisions a first-time entrant must make together (region, partner,
 price and service model) and shows every recommendation with its evidence.
 
@@ -147,6 +149,7 @@ in `app/src/i18n-ja.js`, keyed by the English text.
 ## Pitch
 
 See [`docs/PITCH.md`](docs/PITCH.md) for the 3-minute script, Q&A cheat sheet and demo-day checklist.
+For how everything works under the hood, read [`docs/TECHNICAL.md`](docs/TECHNICAL.md).
 
 ## Changing the logo
 
