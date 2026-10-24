@@ -8,11 +8,14 @@ import { evaluate } from '../lib/engine.js'
 import { draftFor, liveSource, replaySource, runScout, scoutStatus } from '../lib/scout.js'
 import { useI18n } from '../i18n.jsx'
 import { GoogleButton, useAuth } from '../auth.jsx'
+import { fetchReplies, sendGmail } from '../lib/gmail.js'
 
 const GOALS = [
   'We make coordinate measuring machines (CMM) for automotive parts plants. We cannot install or service them ourselves in India, our budget is limited, and we want a paying pilot customer within six months.',
   '当社は電子部品の外観検査装置メーカーです。インドに拠点はなく、据付と保守を任せられる現地パートナーを1年以内に見つけたいです。',
 ]
+
+const INTENT = { interested: 'Interested', needs_info: 'Needs information', declined: 'Declined', other: 'Other' }
 
 const digits = (s) => String(s || '').replace(/\D/g, '')
 // wa.me needs the full international number; Indian numbers written locally get +91.
@@ -55,7 +58,7 @@ function Step({ item, t, lang }) {
         {item.kind === 'reflect' && <><b>{t('Not enough strong matches — searching again')}</b><p className="muted">{item.feedback}</p></>}
         {item.kind === 'draft' && (
           <>
-            <b>{t('Drafting a bilingual introduction')}</b>
+            <b>{t('Writing a bilingual email')}</b>
             {item.status === 'done' && <p>{t('Ready for {p}', { p: item.partner.name })}</p>}
             {item.status === 'error' && <p className="muted">{item.reason}</p>}
           </>
@@ -65,40 +68,76 @@ function Step({ item, t, lang }) {
   )
 }
 
-function DraftModal({ partner, draft, onClose, t, lang }) {
-  const [l, setLState] = useState(lang)
-  const [subject, setSubject] = useState(lang === 'ja' ? draft.subject_ja : draft.subject_en)
-  const [body, setBody] = useState(lang === 'ja' ? draft.body_ja : draft.body_en)
+// The AI-written email: edit it, then send it from your own Gmail (with a confirm step),
+// send yourself a test, or fall back to your mail app / WhatsApp.
+function EmailComposer({ partner, draft, onClose, t, lang, auth, sentRecord, onSent }) {
+  const [l, setL] = useState(lang)
+  // Fill the sender's name from their Google account; other placeholders must be filled by hand.
+  const me = auth.user?.name
+  const fill = (s) => (me ? s.replace(/\[(Your name|氏名)\]/g, me) : s)
+  const [edits, setEdits] = useState({
+    en: { subject: draft.subject_en, body: fill(draft.body_en) },
+    ja: { subject: draft.subject_ja, body: fill(draft.body_ja) },
+  })
+  const [both, setBoth] = useState(true)
+  const [confirm, setConfirm] = useState(null) // 'partner' | 'self'
+  const [sending, setSending] = useState(false)
+  const [error, setError] = useState('')
+  const [testSent, setTestSent] = useState(null)
   const [copied, setCopied] = useState(false)
-  const setL = (next) => {
-    setLState(next)
-    setSubject(next === 'ja' ? draft.subject_ja : draft.subject_en)
-    setBody(next === 'ja' ? draft.body_ja : draft.body_en)
-  }
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && onClose()
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
+
+  const cur = edits[l]
+  const edit = (field, value) => setEdits((e) => ({ ...e, [l]: { ...e[l], [field]: value } }))
+  const final = both
+    ? { subject: `${edits.en.subject} / ${edits.ja.subject}`, body: `${edits.en.body}\n\n――――――――――\n\n${edits.ja.body}` }
+    : { subject: cur.subject, body: cur.body }
   const c = partner.contact || {}
-  const mail = c.email ? `mailto:${c.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}` : null
-  const wa = c.phone ? `https://wa.me/${waNumber(c.phone)}?text=${encodeURIComponent(`${subject}\n\n${body}`)}` : null
+  const fictional = /\.example$/i.test(partner.domain || '')
+  const mail = c.email ? `mailto:${c.email}?subject=${encodeURIComponent(final.subject)}&body=${encodeURIComponent(final.body)}` : null
+  const wa = c.phone ? `https://wa.me/${waNumber(c.phone)}?text=${encodeURIComponent(`${final.subject}\n\n${final.body}`)}` : null
+  const target = confirm === 'self' ? auth.user?.email : c.email
+  const placeholder = `${final.subject}\n${final.body}`.match(/\[(Your name|Company|氏名|会社名)\]/)
+
   const copy = async () => {
     try {
-      await navigator.clipboard.writeText(`${subject}\n\n${body}`)
+      await navigator.clipboard.writeText(`${final.subject}\n\n${final.body}`)
       setCopied(true)
     } catch {
       setCopied(false)
     }
   }
+
+  const doSend = async () => {
+    setSending(true)
+    setError('')
+    try {
+      // Never send to the simulated run's fictional addresses.
+      const result = confirm === 'partner' && fictional
+        ? { id: null, at: new Date(), simulated: true }
+        : await sendGmail({ clientId: auth.clientId, hint: auth.user?.email, to: target, subject: final.subject, body: final.body })
+      if (confirm === 'self') setTestSent(result)
+      else onSent({ ...result, to: target })
+      setConfirm(null)
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setSending(false)
+    }
+  }
+
   return (
     <>
       <motion.div className="scrim" onClick={onClose} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />
       <div className="modal-wrap">
-      <motion.div className="modal" role="dialog" aria-modal="true" aria-label={t('Message to {p}', { p: partner.name })}
+      <motion.div className="modal" role="dialog" aria-modal="true" aria-label={t('Email to {p}', { p: partner.name })}
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}>
         <div className="list-head">
-          <span className="h3">{t('Message to {p}', { p: partner.name })}</span>
+          <span className="h3">✦ {t('Email to {p}', { p: partner.name })}</span>
           <div className="lang-switch" style={{ marginLeft: 'auto' }}>
             <button className={l === 'en' ? 'on' : ''} onClick={() => setL('en')}>EN</button>
             <button className={l === 'ja' ? 'on' : ''} onClick={() => setL('ja')}>日本語</button>
@@ -106,22 +145,54 @@ function DraftModal({ partner, draft, onClose, t, lang }) {
           <button className="x-small" onClick={onClose} aria-label={t('Close panel')}>✕</button>
         </div>
         <div className="cell">
+          <p className="small muted" style={{ marginTop: 0 }}>{t('Written by AI from the facts on their website. Edit anything before sending.')}</p>
           <label className="mini">{t('Subject')}</label>
-          <input className="input" value={subject} onChange={(e) => setSubject(e.target.value)} />
+          <input className="input" value={cur.subject} onChange={(e) => edit('subject', e.target.value)} />
           <label className="mini" style={{ marginTop: 12 }}>{t('Message')}</label>
-          <textarea className="input" rows={12} value={body} onChange={(e) => setBody(e.target.value)} />
+          <textarea className="input" rows={11} value={cur.body} onChange={(e) => edit('body', e.target.value)} />
+          <label className="check-line">
+            <input type="checkbox" checked={both} onChange={(e) => setBoth(e.target.checked)} />
+            {t('Send English and Japanese together in one email')}
+          </label>
           <div className="contact-line">
             {c.email && <span>✉ {c.email} <em>{t('verified on their site')}</em></span>}
             {c.phone && <span>☏ {c.phone} <em>{t('verified on their site')}</em></span>}
             {!c.email && !c.phone && <span className="muted">{t('No contact details were found on the site — use their contact page.')}</span>}
           </div>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 14 }}>
-            {mail && <a className="btn" href={mail}>{t('Open in email')}</a>}
-            {wa && <a className="btn ghost" href={wa} target="_blank" rel="noreferrer">{t('WhatsApp')}</a>}
-            {c.contact_url && <a className="btn ghost" href={c.contact_url} target="_blank" rel="noreferrer">{t('Contact page')}</a>}
-            <button className="btn ghost" onClick={copy}>{copied ? t('✓ Copied') : t('Copy')}</button>
-          </div>
-          <p className="small muted" style={{ marginBottom: 0 }}>{t('Nothing is sent automatically. You review, edit and send it yourself, using only contacts the company publishes.')}</p>
+
+          {sentRecord ? (
+            <div className="sent-banner">
+              ✓ {sentRecord.simulated
+                ? t('Simulated send — fictional address, nothing was sent.')
+                : t('Sent to {to} at {time} from your Gmail.', { to: sentRecord.to, time: sentRecord.at.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) })}
+              {!sentRecord.simulated && <> <a href="https://mail.google.com/mail/u/0/#sent" target="_blank" rel="noreferrer">{t('Open Gmail Sent')}</a></>}
+            </div>
+          ) : confirm ? (
+            <div className="confirm-box">
+              <b>{confirm === 'self'
+                ? t('Send a test of this email to {me}?', { me: auth.user?.email })
+                : t('Send this email to {to} from {me}?', { to: c.email, me: auth.user?.email })}</b>
+              {confirm === 'partner' && fictional && <p className="small muted">{t('This is a fictional company from the simulated run, so nothing will actually be sent.')}</p>}
+              <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
+                <button className="btn" disabled={sending} onClick={doSend}>{sending ? t('Sending…') : t('Confirm and send')}</button>
+                <button className="btn ghost" disabled={sending} onClick={() => setConfirm(null)}>{t('Cancel')}</button>
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 14, alignItems: 'center' }}>
+              {auth.enabled && auth.user && c.email && <button className="btn" disabled={!!placeholder} onClick={() => setConfirm('partner')}>{t('Send now ✉')}</button>}
+              {auth.enabled && auth.user && <button className="btn ghost" onClick={() => setConfirm('self')}>{t('Send a test to me')}</button>}
+              {auth.enabled && !auth.user && c.email && <span className="signin-gate"><span className="small muted">{t('Sign in to send from your Gmail')}</span><GoogleButton lang={lang} /></span>}
+              {mail && <a className="btn ghost" href={mail}>{t('Open in email app')}</a>}
+              {wa && <a className="btn ghost" href={wa} target="_blank" rel="noreferrer">{t('WhatsApp')}</a>}
+              {c.contact_url && <a className="btn ghost" href={c.contact_url} target="_blank" rel="noreferrer">{t('Contact page')}</a>}
+              <button className="btn ghost" onClick={copy}>{copied ? t('✓ Copied') : t('Copy')}</button>
+            </div>
+          )}
+          {placeholder && !sentRecord && <p className="small" style={{ color: 'var(--warn)' }}>{t('Replace {ph} in the message before sending.', { ph: placeholder[0] })}</p>}
+          {testSent && !confirm && <p className="small" style={{ color: 'var(--pass)' }}>✓ {t('Test sent to {me}.', { me: auth.user?.email })}</p>}
+          {error && <p className="small" style={{ color: 'var(--shu)' }}>{error}</p>}
+          <p className="small muted" style={{ marginBottom: 0 }}>{t('Emails go out from your own Gmail only after you confirm, to addresses the company publishes. Replies come straight to you.')}</p>
         </div>
       </motion.div>
       </div>
@@ -143,6 +214,8 @@ export default function Scout({ answers, set, addPartners, open, go }) {
   const [drafts, setDrafts] = useState({})
   const [drafting, setDrafting] = useState(null)
   const [modal, setModal] = useState(null)
+  const [sent, setSent] = useState({})
+  const [replies, setReplies] = useState({})
   const [mode, setMode] = useState('live')
   const sourceRef = useRef(null)
   const fileRef = useRef(null)
@@ -166,6 +239,8 @@ export default function Scout({ answers, set, addPartners, open, go }) {
     setItems([])
     setFound([])
     setDrafts({})
+    setSent({})
+    setReplies({})
     setError('')
     setLog(null)
     const g = source.live ? goal : (source.goal || goal)
@@ -239,6 +314,35 @@ export default function Scout({ answers, set, addPartners, open, go }) {
     }
   }
 
+  // Replies come back to the sender's Gmail; this reads only the thread TsunaGo started.
+  const summarise = async (p, idx, reply) => {
+    const src = sourceRef.current || liveSource
+    setReplies((r) => ({ ...r, [p.id]: { ...r[p.id], summarising: idx } }))
+    try {
+      const d = await src.digest({ url: p.website, partner: p.name, reply: reply.text })
+      setReplies((r) => ({ ...r, [p.id]: { ...r[p.id], summarising: null, list: r[p.id].list.map((x, i) => (i === idx ? { ...x, digest: d } : x)) } }))
+    } catch (e) {
+      setReplies((r) => ({ ...r, [p.id]: { ...r[p.id], summarising: null, error: e.message } }))
+    }
+  }
+  const checkReplies = async (p) => {
+    const record = sent[p.id]
+    setReplies((r) => ({ ...r, [p.id]: { ...r[p.id], checking: true, error: '' } }))
+    try {
+      let list
+      if (record.simulated) {
+        const canned = await sourceRef.current?.reply?.(p.website)
+        list = canned ? [{ id: 'sim', from: canned.from, date: new Date(), text: canned.text }] : []
+      } else {
+        list = await fetchReplies({ clientId: auth.clientId, hint: auth.user?.email, threadId: record.threadId, me: auth.user?.email })
+      }
+      setReplies((r) => ({ ...r, [p.id]: { list, checkedAt: new Date(), checking: false } }))
+      if (list.length) summarise(p, list.length - 1, list[list.length - 1])
+    } catch (e) {
+      setReplies((r) => ({ ...r, [p.id]: { ...r[p.id], checking: false, error: e.message } }))
+    }
+  }
+
   const configured = status?.model && status?.search
   const presence = Object.fromEntries(scored.flatMap((p) => Object.entries(p.presence)).map(([s, v]) => [s, Math.min(1, v)]))
   const markers = scored.map((p) => {
@@ -254,7 +358,7 @@ export default function Scout({ answers, set, addPartners, open, go }) {
         <button className="link small" onClick={() => go('analyze')}>{t('Have a brochure already? Analyze it directly →')}</button>
       </p>
       <p className="muted" style={{ maxWidth: 820 }}>
-        {t('Describe your product and goal. The agent plans a search, reads Indian companies’ own websites, checks every claim against the page, scores each company with the TsunaGo engine, and drafts a bilingual introduction you can send yourself.')}
+        {t('Describe your product and goal. The agent plans a search, reads Indian companies’ own websites, checks every claim against the page, scores each company with the TsunaGo engine, and writes a bilingual email you can send from your own Gmail in one click.')}
       </p>
 
       <div className="box" style={{ marginTop: 22 }}>
@@ -323,9 +427,43 @@ export default function Scout({ answers, set, addPartners, open, go }) {
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     <button className="btn ghost small-btn" onClick={() => open('partner', p)}>{t('Open full analysis')}</button>
                     <button className={`btn small-btn ${p.eligible ? '' : 'ghost'}`} disabled={drafting === p.id} onClick={() => openDraft(p)}>
-                      {drafting === p.id ? t('Drafting…') : drafts[p.id] ? t('View message ✉') : t('Draft message ✉')}
+                      {drafting === p.id ? t('Writing…') : sent[p.id] ? t('✓ Sent · view') : drafts[p.id] ? t('View email ✉') : t('Write email with AI ✦')}
                     </button>
                   </div>
+                  {sent[p.id] && (
+                    <div className="replies">
+                      <div className="replies-head">
+                        <span className="mini" style={{ margin: 0 }}>{t('Replies')}</span>
+                        <button className="link small" disabled={replies[p.id]?.checking} onClick={() => checkReplies(p)}>
+                          {replies[p.id]?.checking ? t('Checking…') : t('Check replies ↻')}
+                        </button>
+                      </div>
+                      {replies[p.id]?.checkedAt && !replies[p.id].list.length && (
+                        <p className="small muted">{t('No reply yet · checked {time}', { time: replies[p.id].checkedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) })}</p>
+                      )}
+                      {(replies[p.id]?.list || []).map((r, i) => (
+                        <div key={r.id} className="reply">
+                          <div className="small"><b>{r.from}</b> · <span className="muted">{r.date.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</span></div>
+                          {r.digest ? (
+                            <div className="digest">
+                              <span className={`intent ${r.digest.intent}`}>{t(INTENT[r.digest.intent])}</span>
+                              <p>{lang === 'ja' ? r.digest.summary_ja : r.digest.summary_en}</p>
+                              <p className="small"><b>{t('Next step')}:</b> {lang === 'ja' ? r.digest.next_step_ja : r.digest.next_step_en}</p>
+                            </div>
+                          ) : replies[p.id].summarising === i ? (
+                            <p className="small muted"><span className="spin">✿</span> {t('Summarising…')}</p>
+                          ) : (
+                            <button className="link small" onClick={() => summarise(p, i, r)}>{t('✦ Summarise & translate')}</button>
+                          )}
+                          <details>
+                            <summary className="small muted">{t('Original reply')}</summary>
+                            <pre className="reply-text">{r.text}</pre>
+                          </details>
+                        </div>
+                      ))}
+                      {replies[p.id]?.error && <p className="small" style={{ color: 'var(--shu)' }}>{replies[p.id].error}</p>}
+                    </div>
+                  )}
                 </motion.div>
               ))}
             </AnimatePresence>
@@ -334,7 +472,10 @@ export default function Scout({ answers, set, addPartners, open, go }) {
       )}
 
       <AnimatePresence>
-        {modal && <DraftModal key={modal.partner.id} partner={modal.partner} draft={modal.draft} onClose={() => setModal(null)} t={t} lang={lang} />}
+        {modal && (
+          <EmailComposer key={modal.partner.id} partner={modal.partner} draft={modal.draft} onClose={() => setModal(null)} t={t} lang={lang}
+            auth={auth} sentRecord={sent[modal.partner.id]} onSent={(r) => setSent((x) => ({ ...x, [modal.partner.id]: r }))} />
+        )}
       </AnimatePresence>
     </div>
   )

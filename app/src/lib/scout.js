@@ -34,6 +34,7 @@ export const liveSource = {
   search: (b) => post('search', b),
   read: (b) => post('read', b),
   draft: (b) => post('draft', b),
+  digest: (b) => post('digest', b),
 }
 
 // Replays a recorded or simulated run with its original pacing (capped), for offline demos.
@@ -51,6 +52,9 @@ export function replaySource(run) {
       return r || { url, readable: false, reason: 'Not in the recording.' }
     },
     draft: async ({ url }) => { const d = run.drafts?.[url]; await wait(d?.ms); if (!d) throw new Error('No draft in the recording.'); return d },
+    // Simulated runs carry a canned partner reply so the reply flow can be shown offline.
+    reply: async (url) => { await wait(1200); return run.replies?.[url] || null },
+    digest: async ({ url }) => { await wait(1200); const d = run.replies?.[url]?.digest; if (!d) throw new Error('No summary in the recording.'); return d },
   }
 }
 

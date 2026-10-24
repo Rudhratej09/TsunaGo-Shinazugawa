@@ -288,13 +288,41 @@ export async function draft({ partner, product, model }, env) {
   return { subject_en: String(d.subject_en || ''), body_en: String(d.body_en || ''), subject_ja: String(d.subject_ja || ''), body_ja: String(d.body_ja || ''), model: out.model, ms: out.ms }
 }
 
+// ---------- digest (a partner's reply) ----------
+const DIGEST_SCHEMA = {
+  type: 'object', additionalProperties: false,
+  required: ['intent', 'summary_en', 'summary_ja', 'next_step_en', 'next_step_ja'],
+  properties: {
+    intent: { type: 'string', enum: ['interested', 'needs_info', 'declined', 'other'] },
+    summary_en: { type: 'string', description: '1-2 sentences' },
+    summary_ja: { type: 'string', description: 'Same in natural Japanese' },
+    next_step_en: { type: 'string', description: 'One concrete next step for the SME' },
+    next_step_ja: { type: 'string', description: 'Same in natural Japanese' },
+  },
+}
+
+const DIGEST_SYSTEM = `You help a Japanese SME read replies from Indian partner companies. Summarise the reply faithfully (no invented details), classify the partner's intent, and suggest one concrete next step.`
+
+export async function digest({ partner, reply }, env) {
+  const text = String(reply || '').slice(0, 6000)
+  if (text.trim().length < 5) throw new LLMError('too_short', 'The reply is empty.', 400)
+  const out = await chatJSON(env, { system: DIGEST_SYSTEM, user: `Partner: ${partner || 'Indian company'}\n\n<reply>\n${text}\n</reply>`, schema: DIGEST_SCHEMA, maxTokens: 800 })
+  const d = out.data || {}
+  return {
+    intent: ['interested', 'needs_info', 'declined', 'other'].includes(d.intent) ? d.intent : 'other',
+    summary_en: String(d.summary_en || ''), summary_ja: String(d.summary_ja || d.summary_en || ''),
+    next_step_en: String(d.next_step_en || ''), next_step_ja: String(d.next_step_ja || d.next_step_en || ''),
+    model: out.model, ms: out.ms,
+  }
+}
+
 // ---------- status ----------
 export function status(env) {
   const provider = env.LLM_PROVIDER || ['groq', 'huggingface', 'openrouter', 'anthropic'].find((p) => env[{ groq: 'GROQ_API_KEY', huggingface: 'HF_TOKEN', openrouter: 'OPENROUTER_API_KEY', anthropic: 'ANTHROPIC_API_KEY' }[p]]) || null
   return { model: provider, search: env.TAVILY_API_KEY ? 'tavily' : null }
 }
 
-const ACTIONS = { plan, search, read, draft }
+const ACTIONS = { plan, search, read, draft, digest }
 
 export async function handleScout(req, res, env) {
   const action = new URL(req.url, 'http://x').searchParams.get('action')

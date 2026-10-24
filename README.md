@@ -57,6 +57,26 @@ sign-in, so visitors can't use up your free API quota. Simulated and replayed ru
 The browser receives Google's signed ID token; the server verifies it against Google's public keys and
 sets a 7-day HttpOnly session cookie. No Google client secret is needed, and cross-site requests are refused.
 
+### Sending email from Partner Scout (Gmail)
+
+**Send now** sends the AI-written email from the signed-in user's own Gmail (send-only permission,
+requested on first use; the token stays in the browser). To enable it in the same Google Cloud project:
+
+1. Enable the **Gmail API** (*APIs & Services → Library*).
+2. On the **OAuth consent screen**, add the scopes `https://www.googleapis.com/auth/gmail.send` (Send now)
+   and `https://www.googleapis.com/auth/gmail.readonly` (Check replies).
+3. While the app is in **Testing** mode, add each sender's Google account under **Test users** (up to 100).
+   Publishing for everyone requires Google's verification of this sensitive scope.
+
+Every send needs a confirm click, goes only to an address verified on the company's own site, and is
+blocked while placeholders like `[Company]` remain. **Send a test to me** sends the same email to yourself,
+which is the safest way to demo it live. Simulated runs never send to their fictional addresses.
+
+**Replies** land in the sender's own Gmail inbox. **Check replies** on a sent partner reads only that
+email thread, and the AI summarises the reply in English and Japanese, labels the partner's intent
+(interested / needs information / declined) and suggests the next step. The simulated run includes a
+canned reply so this can be shown offline.
+
 ## Deploy on Vercel (free)
 
 1. Import the GitHub repo in Vercel and set **Root Directory** to `app`.

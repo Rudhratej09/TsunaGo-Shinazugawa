@@ -8,7 +8,7 @@ const AuthContext = createContext({ enabled: false, user: null, ready: false })
 
 let gisPromise
 let initializedFor = null
-function loadGoogleScript() {
+export function loadGoogleScript() {
   gisPromise ||= new Promise((resolve, reject) => {
     if (window.google?.accounts?.id) return resolve(window.google)
     const s = document.createElement('script')

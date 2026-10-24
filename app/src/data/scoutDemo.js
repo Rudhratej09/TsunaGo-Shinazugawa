@@ -118,6 +118,20 @@ export const SCOUT_DEMO = {
       ms: 1200,
     },
   ],
+  // A canned reply so the simulated run can demonstrate reading replies.
+  replies: {
+    'https://www.sahyadri-metrology.example/': {
+      from: 'Anil Deshpande <partners@sahyadri-metrology.example>',
+      text: 'Dear team,\n\nThank you for reaching out. We would be happy to discuss a pilot. Could you share the CMM model specifications, the probe system you use, and your expected service-level terms? We are available for a call on Thursday or Friday afternoon IST.\n\nBest regards,\nAnil Deshpande\nBusiness Development, Sahyadri Metrology Systems',
+      digest: {
+        intent: 'interested',
+        summary_en: 'Sahyadri is open to a pilot and asks for CMM model specifications, the probe system and expected service-level terms. They offer a call on Thursday or Friday afternoon IST.',
+        summary_ja: 'Sahyadriはパイロットに前向きで、CMMの機種仕様、プローブシステム、想定する保守サービス条件の提示を求めています。インド時間の木曜または金曜の午後に打ち合わせが可能とのことです。',
+        next_step_en: 'Send the spec sheet and a draft service SLA, and propose Thursday 15:00 IST for the call.',
+        next_step_ja: '仕様書と保守SLAの案を送り、インド時間木曜15時の打ち合わせを提案しましょう。',
+      },
+    },
+  },
   drafts: {
     'https://www.sahyadri-metrology.example/': {
       subject_en: 'Partnership enquiry: CMM installation and service in Maharashtra',
