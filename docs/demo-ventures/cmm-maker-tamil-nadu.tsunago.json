@@ -1,0 +1,82 @@
+{
+  "format": "tsunago-venture",
+  "version": 1,
+  "name": "CMM maker · Tamil Nadu subsidiary",
+  "exported": "2026-10-25T06:00:00.000Z",
+  "data": {
+    "answers": {
+      "profile": "equipment",
+      "industry": "auto",
+      "budget": "limited",
+      "localInstall": true,
+      "ownService": false,
+      "presence": "none",
+      "timing": "6m",
+      "priorities": {
+        "reach": 4,
+        "technical": 3,
+        "cost": 3,
+        "speed": 3,
+        "japan": 2
+      },
+      "product": "Coordinate measuring machines (CMM) for automotive parts plants"
+    },
+    "shortlist": [
+      "coromandel"
+    ],
+    "visited": {
+      "profile": true,
+      "needs": true,
+      "market": true,
+      "partners": true
+    },
+    "partners-custom": [],
+    "advisor-profile": {
+      "companyName": "Sakura Metrology KK (fictional)",
+      "homeCountry": "Japan",
+      "stage": "60 staff, Nagoya. ¥1.8B revenue; exports to Thailand and Indonesia; no India presence yet",
+      "products": "Bridge-type coordinate measuring machines (CMM) and inspection software for machined automotive parts: engine blocks, gear housings, brake components",
+      "usp": "±1.5 µm accuracy at 30% lower price than European CMMs; inspection cycle 25% faster with our software",
+      "price": "¥9–14M per machine (Japan list)",
+      "unitCost": "¥6–8M per machine",
+      "customers": "Japanese tier-1 auto suppliers in Japan, Thailand and Indonesia",
+      "buyerType": "Tier-1 / tier-2 auto-component plants in Tamil Nadu and Maharashtra (B2B)",
+      "investment": "Limited initial commitment (≈ ₹40 lakh for the pilot)",
+      "modify": "Software menus and labels yes; hardware no; Indian voltage and dust protection kit possible",
+      "capacity": "15 machines a month; minimum order 1 machine",
+      "ip": "Patents in Japan and Thailand; no exclusive distributors in Asia",
+      "contacts": "None",
+      "timeline": "Paying pilot customer within 6 months; low risk tolerance",
+      "notes": "We cannot install or service in India ourselves: we need a partner with field engineers (service model B)."
+    },
+    "compliance": {
+      "company": "Sakura Metrology KK (fictional)",
+      "industry": "auto",
+      "category": "machinery",
+      "mode": "sub",
+      "state": "tn",
+      "landBorder": false,
+      "headcount": 8,
+      "expats": 1,
+      "personalData": false,
+      "revenueCr": 4,
+      "partnerId": "coromandel",
+      "partnerName": "Coromandel Metrology Systems"
+    },
+    "compliance-cur": {
+      "ccy": "INR",
+      "rate": 0.605
+    },
+    "coach-form": {
+      "situation": "delay",
+      "counterpart": "Coromandel Metrology Systems (Integrator, Chennai)",
+      "message": "お世話になっております。先日ご提案いただいた独占販売の件、社内で前向きに検討させていただきます。少しお時間をいただけますと幸いです。今後ともよろしくお願いいたします。"
+    },
+    "negotiate-form": {
+      "partner": "Coromandel Metrology Systems — Integrator, Chennai",
+      "product": "Coordinate measuring machines for automotive parts plants",
+      "terms": "Exclusivity, Service SLA, Payment terms",
+      "position": "Exclusivity in Tamil Nadu only for 12 months; on-site response within 24h; advance payment on the first order"
+    }
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "format": "tsunago-venture",
+  "version": 1,
+  "name": "Hikari Semitech · electronics via distributor",
+  "exported": "2026-10-25T06:00:00.000Z",
+  "data": {
+    "answers": {
+      "profile": "first",
+      "industry": "electronics",
+      "budget": "custom",
+      "budgetLakh": 150,
+      "localInstall": false,
+      "ownService": true,
+      "presence": "none",
+      "timing": "12m",
+      "priorities": {
+        "reach": 4,
+        "technical": 3,
+        "cost": 3,
+        "speed": 3,
+        "japan": 2
+      },
+      "product": "Schottky/TVS diodes, Cortex-M7 dev boards and ESP32-based IoT modules"
+    },
+    "shortlist": [
+      "kaveri"
+    ],
+    "visited": {
+      "profile": true,
+      "needs": true,
+      "market": true,
+      "partners": true
+    },
+    "partners-custom": [],
+    "advisor-profile": {
+      "companyName": "Hikari Semitech KK (fictional)",
+      "homeCountry": "Japan",
+      "stage": "85 staff, Osaka. ¥2.4B revenue; exports to ASEAN and Europe (~30% of sales); no India presence yet",
+      "products": "1) Schottky and TVS diodes for power and ESD protection in EV chargers, inverters and consumer electronics. 2) Cortex-M7 development boards (Teensy-class, 600 MHz) for prototyping and small-batch industrial controllers. 3) ESP32-based Wi-Fi/Bluetooth IoT modules for smart meters, appliances and factory sensors",
+      "usp": "Diodes: AEC-Q101 automotive-qualified, failure rate <1 ppm, ~15% lower forward voltage. Boards/modules: industrial temperature range (−40 to 85 °C), 3-year supply guarantee, Japanese QC on every batch",
+      "price": "Diodes ¥4–18 each (10k+); M7 board ¥4,800; ESP32 module ¥650–1,200 (1k+) — Japan list",
+      "unitCost": "Diodes ¥2–9; M7 board ¥2,900; ESP32 module ¥380–700",
+      "customers": "Japanese tier-1 auto suppliers and appliance makers; EMS firms in Vietnam and Thailand; distributors in Germany",
+      "buyerType": "EMS / contract manufacturers (Tamil Nadu, Karnataka, Noida), EV-charger and EV two-wheeler makers, smart-meter and IoT device makers",
+      "investment": "₹1.5 crore (≈ ¥25M) over the first 2 years, including a pilot and certification",
+      "modify": "Yes: packaging, labelling, firmware defaults; no change to the diode process",
+      "capacity": "Diodes 40M units/month (MOQ 10k per part); boards 20k/month (MOQ 500); modules 60k/month (MOQ 1k)",
+      "ip": "Diode process patents in Japan only; exclusive distributor in Vietnam; open to a non-exclusive Indian distributor first",
+      "contacts": "None. Two Indian EMS firms requested quotes via our website last year",
+      "timeline": "First paid order within 9 months; low risk tolerance: distributor before any entity",
+      "notes": "Wireless modules may need WPC/ETA approval; check BIS registration; India's electronics PLI push is a demand signal"
+    },
+    "compliance": {
+      "company": "Hikari Semitech KK (fictional)",
+      "industry": "electronics",
+      "category": "electronics",
+      "mode": "export",
+      "state": "ka",
+      "landBorder": false,
+      "headcount": 0,
+      "expats": 0,
+      "personalData": false,
+      "revenueCr": 3,
+      "partnerId": "kaveri",
+      "partnerName": "Kaveri Automation Partners"
+    },
+    "compliance-cur": {
+      "ccy": "JPY",
+      "rate": 0.605
+    },
+    "coach-form": {
+      "situation": "price",
+      "counterpart": "Kaveri Automation Partners (Integrator, Bengaluru)",
+      "message": "Thank you for your request. Unfortunately it is difficult for us to reduce the price at this time. We will consider your proposal internally and contact you again."
+    },
+    "negotiate-form": {
+      "partner": "Kaveri Automation Partners — Integrator, Bengaluru",
+      "product": "ESP32 IoT modules and power diodes",
+      "terms": "Distributor margin, Minimum order, Payment terms",
+      "position": "Margin up to 15%; MOQ 1k modules; no credit on the first order, 30 days after"
+    }
+  }
+}
