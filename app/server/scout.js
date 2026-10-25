@@ -205,7 +205,8 @@ Rules:
 - Contact details: copy only business contacts published on the page. Never guess an email or phone number.
 - State codes are lowercase two-letter Indian codes (mh Maharashtra, tn Tamil Nadu, ka Karnataka, gj Gujarat, hr Haryana, dl Delhi, rj Rajasthan, tg Telangana, ap Andhra Pradesh, up Uttar Pradesh, wb West Bengal, mp Madhya Pradesh, pb Punjab, kl Kerala).`
 
-const MAX_TEXT = 14000
+// ~2.5k tokens per page: enough for an About/Services page, and light on free-tier token limits.
+const MAX_TEXT = 10000
 
 export async function read({ url, product }, env) {
   const u = safeURL(url)

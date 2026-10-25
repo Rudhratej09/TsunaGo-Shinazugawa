@@ -34,48 +34,88 @@ export function llmConfig(env) {
 
 const isReasoning = (model) => /gpt-oss|qwen3/i.test(model)
 
-// POST /chat/completions, moving on to the next model when the provider says the current one
-// is unknown or retired (providers retire free models with little notice). Returns the
-// Response plus the model that answered.
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
+// Seconds the provider asks us to wait (Retry-After header, or "try again in 2.5s" in the body).
+const retryAfter = (res, text) => {
+  const h = Number(res.headers.get('retry-after'))
+  if (Number.isFinite(h) && h > 0) return h
+  const m = /try again in ([\d.]+)\s*(ms|s)/i.exec(text || '')
+  return m ? Number(m[1]) / (m[2] === 'ms' ? 1000 : 1) : null
+}
+
+// POST /chat/completions with two kinds of fallback:
+// - a model that is unknown or retired → try the next model (providers retire free models);
+// - a rate limit (429) → try the next model, since free-tier limits are per model; if every
+//   model is limited, wait once for the shortest Retry-After (max 8 s) and retry the first.
+// Returns the Response plus the model that answered.
 export async function postChat(cfg, body, timeoutMs = 50_000) {
   const models = [cfg.model, ...(cfg.fallbacks || [])]
-  for (let i = 0; i < models.length; i++) {
-    const model = models[i]
-    const payload = { ...body, model }
-    if (isReasoning(model) && cfg.name === 'groq') {
-      // Reasoning tokens count against max_tokens; keep reasoning short and leave headroom.
-      payload.reasoning_effort = 'low'
-      if (payload.max_tokens) payload.max_tokens += 2000
+  let limited = null // { res, text, model, wait }
+  for (let attempt = 0; attempt < 2; attempt++) {
+    for (let i = 0; i < models.length; i++) {
+      const out = await postOnce(cfg, body, models[i], timeoutMs)
+      if (out.gone && i < models.length - 1) continue
+      if (out.res.status === 429) {
+        const text = await out.res.text()
+        const wait = retryAfter(out.res, text)
+        if (!limited || (wait ?? 99) < (limited.wait ?? 99)) limited = { res: out.res, text, model: models[i], wait }
+        continue
+      }
+      return { res: out.res, model: models[i] }
     }
-    const ctrl = new AbortController()
-    const timer = setTimeout(() => ctrl.abort(), timeoutMs)
-    let res
-    try {
-      res = await fetch(`${cfg.baseURL}/chat/completions`, {
-        method: 'POST',
-        signal: ctrl.signal,
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${cfg.apiKey}` },
-        body: JSON.stringify(payload),
-      })
-    } catch (e) {
-      throw new LLMError(e.name === 'AbortError' ? 'timeout' : 'network', e.name === 'AbortError' ? 'The model took too long to answer.' : `Could not reach ${cfg.name}.`)
-    } finally {
-      clearTimeout(timer)
+    // Every model was rate-limited: wait briefly once if the provider says it will clear soon.
+    if (attempt === 0 && limited && limited.wait != null && limited.wait <= 8) {
+      await sleep(limited.wait * 1000 + 250)
+      continue
     }
-    if (res.status === 404 || res.status === 400) {
-      const text = await res.text()
-      const gone = res.status === 404 || /model.*(not found|does not exist|decommission|deprecat|retired)/i.test(text)
-      if (gone && i < models.length - 1) continue
-      return { res: new Response(text, { status: res.status, headers: res.headers }), model }
-    }
-    return { res, model }
+    break
   }
+  return { res: new Response(limited?.text ?? '', { status: 429, headers: limited?.res.headers }), model: limited?.model || cfg.model }
+}
+
+// One request to one model. `gone` = the provider says this model doesn't exist or was retired.
+async function postOnce(cfg, body, model, timeoutMs) {
+  const payload = { ...body, model }
+  if (isReasoning(model) && cfg.name === 'groq') {
+    // Reasoning tokens count against max_tokens; keep reasoning short and leave some headroom
+    // (kept modest: requested tokens also count towards the per-minute token limit).
+    payload.reasoning_effort = 'low'
+    if (payload.max_tokens) payload.max_tokens += 1200
+  }
+  const ctrl = new AbortController()
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs)
+  let res
+  try {
+    res = await fetch(`${cfg.baseURL}/chat/completions`, {
+      method: 'POST',
+      signal: ctrl.signal,
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${cfg.apiKey}` },
+      body: JSON.stringify(payload),
+    })
+  } catch (e) {
+    throw new LLMError(e.name === 'AbortError' ? 'timeout' : 'network', e.name === 'AbortError' ? 'The model took too long to answer.' : `Could not reach ${cfg.name}.`)
+  } finally {
+    clearTimeout(timer)
+  }
+  if (res.status === 404 || res.status === 400) {
+    const text = await res.text()
+    const gone = res.status === 404 || /model.*(not found|does not exist|decommission|deprecat|retired)/i.test(text)
+    return { res: new Response(text, { status: res.status, headers: res.headers }), gone }
+  }
+  return { res, gone: false }
 }
 
 // Turn a failed provider response into an LLMError that says what actually went wrong.
 export async function providerError(cfg, res, model) {
   if (res.status === 401 || res.status === 403) return new LLMError('auth', `The ${cfg.name} API key was rejected.`)
-  if (res.status === 429) return new LLMError('rate_limit', `${cfg.name} rate limit reached — wait a moment and retry.`, 429)
+  if (res.status === 429) {
+    let text = ''
+    try { text = await res.text() } catch { /* body already read */ }
+    const daily = /per day|TPD|RPD/i.test(text)
+    return new LLMError('rate_limit', daily
+      ? `${cfg.name} daily limit reached on every model. It resets within 24 hours; a paid (Developer) tier removes it.`
+      : `${cfg.name} per-minute limit reached on every model — wait about a minute and retry.`, 429)
+  }
   let detail = ''
   try {
     const j = await res.json()
